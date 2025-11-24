@@ -1,0 +1,15 @@
+node_modules/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-error.log*
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+coverage/
+dist/
+build/
