@@ -93,6 +93,7 @@ This will create:
 npm run dev
 ```
 
+
 ### Production
 ```bash
 npm start
@@ -103,6 +104,23 @@ The server will run on `http://localhost:3000`
 ## API Documentation
 
 Access Swagger UI at: `http://localhost:3000/api-docs`
+
+## Postman Collection
+
+A complete Postman collection is available for testing all API endpoints:
+- **Collection File:** `Proedge_Backend.postman_collection.json`
+- **Guide:** See `POSTMAN_GUIDE.md` for detailed usage instructions
+- **Features:**
+  - 40+ endpoints organized by feature
+  - Auto-save JWT token on login
+  - Pre-filled request bodies with examples
+  - Demo credentials included
+
+**Quick Import:**
+1. Open Postman
+2. Click Import → Select `Proedge_Backend.postman_collection.json`
+3. Set `base_url` variable to `http://localhost:3000`
+4. Start testing!
 
 ## Docker Setup
 
