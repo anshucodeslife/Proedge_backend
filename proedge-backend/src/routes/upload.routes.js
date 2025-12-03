@@ -32,10 +32,10 @@ const router = express.Router();
  *         description: Signed upload URL generated
  */
 router.post(
-  '/signed-url',
-  authMiddleware,
-  roleMiddleware(['ADMIN', 'TUTOR']),
-  uploadController.getUploadUrl
+    '/signed-url',
+    authMiddleware,
+    roleMiddleware(['ADMIN', 'TUTOR']),
+    uploadController.getUploadUrl
 );
 
 /**
