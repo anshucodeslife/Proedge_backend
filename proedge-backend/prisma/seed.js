@@ -86,6 +86,7 @@ async function seed() {
         price: 999 + i * 100,
         isPaid: true,
         currency: 'INR',
+        thumbnail: 'https://backend.proedgelearning.in/assets/course-thumbnail.jpg',
       },
     });
     courses.push(course);
@@ -198,6 +199,83 @@ async function seed() {
     });
   }
   console.log('✓ Created sample notifications');
+
+  // Create payments and invoices
+  const enrollments = await prisma.enrollment.findMany({ take: 3 });
+  for (const enrollment of enrollments) {
+    const payment = await prisma.payment.create({
+      data: {
+        orderId: `order_${Math.random().toString(36).substring(7)}`,
+        paymentId: `pay_${Math.random().toString(36).substring(7)}`,
+        amount: 999,
+        status: 'SUCCESS',
+        enrollmentId: enrollment.id,
+      },
+    });
+
+    await prisma.invoice.create({
+      data: {
+        paymentId: payment.id,
+        invoiceNo: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        amount: 999,
+        total: 999,
+        pdfUrl: 'https://backend.proedgelearning.in/invoices/demo.pdf',
+      },
+    });
+  }
+  console.log('✓ Created sample payments and invoices');
+
+  // Create coupons
+  await prisma.coupon.createMany({
+    data: [
+      {
+        code: 'WELCOME50',
+        discountType: 'PERCENT',
+        discountValue: 50,
+        maxUses: 100,
+        usageCount: 0,
+      },
+      {
+        code: 'FLAT100',
+        discountType: 'FIXED',
+        discountValue: 100,
+        maxUses: 50,
+        usageCount: 0,
+      },
+    ],
+  });
+  console.log('✓ Created sample coupons');
+
+  // Create enrollment history
+  for (const enrollment of enrollments) {
+    await prisma.enrollmentHistory.create({
+      data: {
+        enrollmentId: enrollment.id,
+        action: 'ENROLLED',
+        note: 'Student enrolled via self-checkout',
+        actor: 'SYSTEM',
+      },
+    });
+  }
+  console.log('✓ Created enrollment history');
+
+  // Create batch video maps
+  const batch = batches[0];
+  const batchLessons = await prisma.lesson.findMany({
+    where: { moduleId: { in: (await prisma.module.findMany({ where: { courseId: batch.courseId } })).map(m => m.id) } },
+    take: 2
+  });
+
+  for (const lesson of batchLessons) {
+    await prisma.batchVideoMap.create({
+      data: {
+        batchId: batch.id,
+        lessonId: lesson.id,
+        videoUrl: lesson.videoUrl || 's3://demo-bucket/default.mp4',
+      },
+    });
+  }
+  console.log('✓ Created batch video maps');
 
   console.log('\n✅ Seed completed successfully!');
   console.log('\nDemo Credentials:');

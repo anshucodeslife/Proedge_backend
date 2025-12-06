@@ -23,13 +23,36 @@ const upload = multer({
   },
 });
 
+
+
+/**
+ * Get all students
+ */
+async function getAllStudents(req, res, next) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+
+    const result = await adminStudentService.getAllStudents(page, limit, search);
+
+    res.status(200).json({
+      success: true,
+      message: 'Students retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 /**
  * Create student
  */
 async function createStudent(req, res, next) {
   try {
     const { studentId, email, password, fullName, isPreApproved } = req.body;
-    
+
     const student = await adminStudentService.createStudent({
       studentId,
       email,
@@ -37,7 +60,7 @@ async function createStudent(req, res, next) {
       fullName,
       isPreApproved,
     });
-    
+
     res.status(201).json({
       success: true,
       message: 'Student created successfully',
@@ -55,9 +78,9 @@ async function updateStudent(req, res, next) {
   try {
     const { id } = req.params;
     const data = req.body;
-    
+
     const student = await adminStudentService.updateStudent(id, data);
-    
+
     res.status(200).json({
       success: true,
       message: 'Student updated successfully',
@@ -75,9 +98,9 @@ async function deleteStudent(req, res, next) {
   try {
     const { id } = req.params;
     const { hardDelete } = req.query;
-    
+
     const result = await adminStudentService.deleteStudent(id, hardDelete === 'true');
-    
+
     res.status(200).json({
       success: true,
       message: result.message,
@@ -94,9 +117,9 @@ async function assignToCourse(req, res, next) {
   try {
     const { id } = req.params;
     const { courseId, batchId } = req.body;
-    
+
     const enrollment = await adminStudentService.assignToCourse(id, courseId, batchId);
-    
+
     res.status(201).json({
       success: true,
       message: 'Student assigned to course successfully',
@@ -114,9 +137,9 @@ async function assignToBatch(req, res, next) {
   try {
     const { id } = req.params;
     const { batchId } = req.body;
-    
+
     const enrollment = await adminStudentService.assignToBatch(id, batchId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Student assigned to batch successfully',
@@ -135,9 +158,9 @@ async function bulkUpload(req, res, next) {
     if (!req.file) {
       throw new Error('CSV file is required');
     }
-    
+
     const results = await adminStudentService.bulkUploadStudents(req.file.path);
-    
+
     res.status(200).json({
       success: true,
       message: 'Bulk upload completed',
@@ -159,14 +182,14 @@ async function bulkUpload(req, res, next) {
 async function addPreApproved(req, res, next) {
   try {
     const { studentId, fullName, email, phone } = req.body;
-    
+
     const preApproved = await adminStudentService.addPreApprovedStudent({
       studentId,
       fullName,
       email,
       phone,
     });
-    
+
     res.status(201).json({
       success: true,
       message: 'Pre-approved student added successfully',

@@ -12,24 +12,24 @@ async function createStudent({ studentId, email, password, fullName, isPreApprov
     const existing = await prisma.user.findUnique({
       where: { studentId },
     });
-    
+
     if (existing) {
       throw new Error('Student ID already exists');
     }
   }
-  
+
   // Check if email already exists
   const existingEmail = await prisma.user.findUnique({
     where: { email },
   });
-  
+
   if (existingEmail) {
     throw new Error('Email already exists');
   }
-  
+
   // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
-  
+
   // Create student
   const student = await prisma.user.create({
     data: {
@@ -51,8 +51,62 @@ async function createStudent({ studentId, email, password, fullName, isPreApprov
       createdAt: true,
     },
   });
-  
+
   return student;
+}
+
+/**
+ * Get all students with pagination and filtering
+ */
+async function getAllStudents(page = 1, limit = 10, search = '') {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    role: 'STUDENT',
+    ...(search && {
+      OR: [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { studentId: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+  };
+
+  const [students, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        studentId: true,
+        email: true,
+        fullName: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        enrollments: {
+          select: {
+            id: true,
+            course: { select: { title: true } },
+            batch: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return {
+    students,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
+  };
 }
 
 /**
@@ -60,7 +114,7 @@ async function createStudent({ studentId, email, password, fullName, isPreApprov
  */
 async function updateStudent(id, data) {
   const { fullName, email, studentId, status } = data;
-  
+
   const student = await prisma.user.update({
     where: { id },
     data: {
@@ -79,7 +133,7 @@ async function updateStudent(id, data) {
       updatedAt: true,
     },
   });
-  
+
   return student;
 }
 
@@ -112,11 +166,11 @@ async function assignToCourse(studentId, courseId, batchId = null) {
       courseId,
     },
   });
-  
+
   if (existing) {
     throw new Error('Student already enrolled in this course');
   }
-  
+
   // Create enrollment
   const enrollment = await prisma.enrollment.create({
     data: {
@@ -141,7 +195,7 @@ async function assignToCourse(studentId, courseId, batchId = null) {
       },
     },
   });
-  
+
   return enrollment;
 }
 
@@ -154,11 +208,11 @@ async function assignToBatch(studentId, batchId) {
     where: { id: batchId },
     include: { course: true },
   });
-  
+
   if (!batch) {
     throw new Error('Batch not found');
   }
-  
+
   // Check if student is enrolled in the course
   let enrollment = await prisma.enrollment.findFirst({
     where: {
@@ -166,7 +220,7 @@ async function assignToBatch(studentId, batchId) {
       courseId: batch.courseId,
     },
   });
-  
+
   if (!enrollment) {
     // Create enrollment if doesn't exist
     enrollment = await prisma.enrollment.create({
@@ -184,7 +238,7 @@ async function assignToBatch(studentId, batchId) {
       data: { batchId },
     });
   }
-  
+
   return enrollment;
 }
 
@@ -194,7 +248,7 @@ async function assignToBatch(studentId, batchId) {
 async function bulkUploadStudents(filePath) {
   const students = [];
   const errors = [];
-  
+
   return new Promise((resolve, reject) => {
     fs.createReadStream(filePath)
       .pipe(csv())
@@ -206,7 +260,7 @@ async function bulkUploadStudents(filePath) {
           success: [],
           failed: [],
         };
-        
+
         for (const student of students) {
           try {
             const created = await createStudent({
@@ -216,7 +270,7 @@ async function bulkUploadStudents(filePath) {
               fullName: student.fullName,
               isPreApproved: true,
             });
-            
+
             results.success.push(created);
           } catch (error) {
             results.failed.push({
@@ -225,7 +279,7 @@ async function bulkUploadStudents(filePath) {
             });
           }
         }
-        
+
         resolve(results);
       })
       .on('error', reject);
@@ -244,7 +298,7 @@ async function addPreApprovedStudent({ studentId, fullName, email, phone }) {
       phone,
     },
   });
-  
+
   return preApproved;
 }
 

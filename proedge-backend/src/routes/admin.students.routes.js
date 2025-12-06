@@ -1,31 +1,53 @@
 const express = require('express');
 const { body } = require('express-validator');
+const router = express.Router();
 const adminStudentController = require('../controllers/admin.student.controller');
 const authMiddleware = require('../middlewares/auth');
 const roleMiddleware = require('../middlewares/role');
 const validate = require('../middlewares/validate');
 
-const router = express.Router();
-
-// All routes require admin authentication
+// Protect all routes
 router.use(authMiddleware);
 router.use(roleMiddleware(['ADMIN']));
 
 /**
  * @swagger
  * /admin/students:
- *   post:
- *     summary: Create a new student (Admin only)
+ *   get:
+ *     summary: Get all students
  *     tags: [Admin - Students]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of students
+ */
+router.get('/', adminStudentController.getAllStudents);
+
+/**
+ * @swagger
+ * /admin/students:
+ *   post:
+ *     summary: Create new student
+ *     tags: [Admin - Students]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, password, fullName]
+ *             required: [studentId, email, password, fullName]
  *             properties:
  *               studentId:
  *                 type: string
@@ -41,16 +63,12 @@ router.use(roleMiddleware(['ADMIN']));
  *       201:
  *         description: Student created successfully
  */
-router.post(
-  '/',
-  [
-    body('email').isEmail().withMessage('Invalid email'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('fullName').notEmpty().withMessage('Full name is required'),
-  ],
-  validate,
-  adminStudentController.createStudent
-);
+router.post('/', [
+  body('studentId').notEmpty().withMessage('Student ID is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('fullName').notEmpty().withMessage('Full name is required')
+], validate, adminStudentController.createStudent);
 
 /**
  * @swagger
@@ -58,8 +76,6 @@ router.post(
  *   put:
  *     summary: Update student details
  *     tags: [Admin - Students]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
