@@ -366,6 +366,370 @@
 							]
 						}
 					}
+				},
+				{
+					"name": "Get All Students",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/students?page=1&limit=20&search=&status=ACTIVE&sortBy=createdAt&sortOrder=desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt"
+								},
+								{
+									"key": "sortOrder",
+									"value": "desc"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Enrollments",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/enrollments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}",
+								"enrollments"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Progress",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/progress?courseId={{course_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}",
+								"progress"
+							],
+							"query": [
+								{
+									"key": "courseId",
+									"value": "{{course_id}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove Student Enrollment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/enrollments/enrollment-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}",
+								"enrollments",
+								"enrollment-id"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Student Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"INACTIVE\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}",
+								"status"
+							]
+						}
+					}
+				},
+				{
+					"name": "Reset Student Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"newPassword\":\"newpass123\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"{{student_id}}",
+								"reset-password"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pre-Approved Students",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/students/pre-approved",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"pre-approved"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Pre-Approved Student",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/admin/students/pre-approved/preapproved-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"pre-approved",
+								"preapproved-id"
+							]
+						}
+					}
+				},
+				{
+					"name": "Bulk Status Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"studentIds\":[\"id1\",\"id2\",\"id3\"],\"status\":\"ACTIVE\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/bulk-status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"bulk-status"
+							]
+						}
+					}
+				},
+				{
+					"name": "Bulk Assign to Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"studentIds\":[\"id1\",\"id2\",\"id3\"],\"courseId\":\"{{course_id}}\",\"batchId\":\"batch-id\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/bulk-assign",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"students",
+								"bulk-assign"
+							]
+						}
+					}
 				}
 			]
 		},
@@ -499,6 +863,151 @@
 								"courses",
 								"{{course_id}}",
 								"progress"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/student/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"student",
+								"profile"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Student Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"fullName\":\"Updated Name\",\"email\":\"new@email.com\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/student/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"student",
+								"profile"
+							]
+						}
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"oldPassword\":\"current123\",\"newPassword\":\"newpass123\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/student/change-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"student",
+								"change-password"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Attendance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/student/attendance",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"student",
+								"attendance"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Payment History",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/student/payments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"student",
+								"payments"
 							]
 						}
 					}
@@ -644,6 +1153,84 @@
 							"path": [
 								"lms",
 								"batches"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Module",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/lms/modules/module-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lms",
+								"modules",
+								"module-id"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Lesson",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/lms/lessons/lesson-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lms",
+								"lessons",
+								"lesson-id"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Batch",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/lms/batches/batch-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lms",
+								"batches",
+								"batch-id"
 							]
 						}
 					}
@@ -1029,6 +1616,111 @@
 				}
 			],
 			"description": "NEW: API Documentation endpoints"
+		},
+		{
+			"name": "Admin - Courses",
+			"item": [
+				{
+					"name": "Get All Courses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/courses?page=1&limit=20&search=&sortBy=createdAt&sortOrder=desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"courses"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt"
+								},
+								{
+									"key": "sortOrder",
+									"value": "desc"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Course by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/courses/{{course_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"courses",
+								"{{course_id}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Course Students",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/admin/courses/{{course_id}}/students",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"courses",
+								"{{course_id}}",
+								"students"
+							]
+						}
+					}
+				}
+			]
 		}
 	]
 }

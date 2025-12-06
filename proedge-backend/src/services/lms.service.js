@@ -71,6 +71,40 @@ const updateBatch = async (id, data) => {
   });
 };
 
+/**
+ * Delete module
+ */
+async function deleteModule(id) {
+  // Prisma will handle cascade delete for lessons through onDelete: Cascade
+  await prisma.module.delete({
+    where: { id },
+  });
+  
+  return { message: 'Module deleted successfully' };
+}
+
+/**
+ * Delete lesson
+ */
+async function deleteLesson(id) {
+  await prisma.lesson.delete({
+    where: { id },
+  });
+  
+  return { message: 'Lesson deleted successfully' };
+}
+
+/**
+ * Delete batch
+ */
+async function deleteBatch(id) {
+  await prisma.batch.delete({
+    where: { id },
+  });
+  
+  return { message: 'Batch deleted successfully' };
+}
+
 module.exports = {
   createModule,
   getModulesByCourse,
@@ -81,4 +115,7 @@ module.exports = {
   createBatch,
   getBatches,
   updateBatch,
+  deleteModule,
+  deleteLesson,
+  deleteBatch,
 };

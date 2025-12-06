@@ -238,6 +238,34 @@ router.post(
  *       201:
  *         description: Pre-approved student added successfully
  */
+/**
+ * @swagger
+ * /admin/students/pre-approved:
+ *   post:
+ *     summary: Add pre-approved student
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [studentId, fullName]
+ *             properties:
+ *               studentId:
+ *                 type: string
+ *               fullName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Pre-approved student added successfully
+ */
 router.post(
   '/pre-approved',
   [
@@ -248,4 +276,328 @@ router.post(
   adminStudentController.addPreApproved
 );
 
+/**
+ * @swagger
+ * /admin/students/pre-approved:
+ *   get:
+ *     summary: Get all pre-approved students
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pre-approved students
+ */
+router.get('/pre-approved', adminStudentController.getPreApproved);
+
+/**
+ * @swagger
+ * /admin/students/pre-approved/{id}:
+ *   delete:
+ *     summary: Delete pre-approved student
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pre-approved student deleted
+ */
+router.delete('/pre-approved/:id', adminStudentController.deletePreApproved);
+
+/**
+ * @swagger
+ * /admin/students/bulk-status:
+ *   post:
+ *     summary: Bulk update student status
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [studentIds, status]
+ *             properties:
+ *               studentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE]
+ *     responses:
+ *       200:
+ *         description: Bulk status update completed
+ */
+router.post(
+  '/bulk-status',
+  [
+    body('studentIds').isArray({ min: 1 }).withMessage('Student IDs array is required'),
+    body('status').isIn(['ACTIVE', 'INACTIVE']).withMessage('Valid status required'),
+  ],
+  validate,
+  adminStudentController.bulkStatusUpdate
+);
+
+/**
+ * @swagger
+ * /admin/students/bulk-assign:
+ *   post:
+ *     summary: Bulk assign students to course
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [studentIds, courseId]
+ *             properties:
+ *               studentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               courseId:
+ *                 type: string
+ *               batchId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Bulk assignment completed
+ */
+router.post(
+  '/bulk-assign',
+  [
+    body('studentIds').isArray({ min: 1 }).withMessage('Student IDs array is required'),
+    body('courseId').notEmpty().withMessage('Course ID is required'),
+  ],
+  validate,
+  adminStudentController.bulkAssignCourse
+);
+
+/**
+ * @swagger
+ * /admin/students:
+ *   get:
+ *     summary: Get all students with pagination and filtering
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE]
+ *       - in: query
+ *         name: courseId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: batchId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *     responses:
+ *       200:
+ *         description: List of students with pagination
+ */
+router.get('/', adminStudentController.getAllStudents);
+
+/**
+ * @swagger
+ * /admin/students/{id}:
+ *   get:
+ *     summary: Get single student with full details
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Student details
+ */
+router.get('/:id', adminStudentController.getStudentById);
+
+/**
+ * @swagger
+ * /admin/students/{id}/enrollments:
+ *   get:
+ *     summary: Get student enrollments
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Student enrollments
+ */
+router.get('/:id/enrollments', adminStudentController.getStudentEnrollments);
+
+/**
+ * @swagger
+ * /admin/students/{id}/progress:
+ *   get:
+ *     summary: Get student progress
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: courseId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Student progress
+ */
+router.get('/:id/progress', adminStudentController.getStudentProgress);
+
+/**
+ * @swagger
+ * /admin/students/{id}/enrollments/{enrollmentId}:
+ *   delete:
+ *     summary: Remove student enrollment
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: enrollmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Enrollment removed
+ */
+router.delete('/:id/enrollments/:enrollmentId', adminStudentController.removeEnrollment);
+
+/**
+ * @swagger
+ * /admin/students/{id}/status:
+ *   patch:
+ *     summary: Update student status
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE]
+ *     responses:
+ *       200:
+ *         description: Status updated
+ */
+router.patch(
+  '/:id/status',
+  [body('status').isIn(['ACTIVE', 'INACTIVE']).withMessage('Valid status required')],
+  validate,
+  adminStudentController.updateStudentStatus
+);
+
+/**
+ * @swagger
+ * /admin/students/{id}/reset-password:
+ *   post:
+ *     summary: Reset student password
+ *     tags: [Admin - Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newPassword]
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ */
+router.post(
+  '/:id/reset-password',
+  [body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')],
+  validate,
+  adminStudentController.resetPassword
+);
+
 module.exports = router;
+

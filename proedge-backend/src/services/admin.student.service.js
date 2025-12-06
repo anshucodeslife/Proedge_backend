@@ -248,6 +248,314 @@ async function addPreApprovedStudent({ studentId, fullName, email, phone }) {
   return preApproved;
 }
 
+/**
+ * Get all students with pagination and filtering
+ */
+async function getAllStudents({ page = 1, limit = 20, search = '', status = '', courseId = '', batchId = '', sortBy = 'createdAt', sortOrder = 'desc' }) {
+  const skip = (page - 1) * limit;
+  
+  // Build where clause
+  const where = {
+    role: 'STUDENT',
+  };
+  
+  if (search) {
+    where.OR = [
+      { fullName: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { studentId: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+  
+  if (status) {
+    where.status = status;
+  }
+  
+  if (courseId) {
+    where.enrollments = {
+      some: { courseId },
+    };
+  }
+  
+  if (batchId) {
+    where.enrollments = {
+      some: { batchId },
+    };
+  }
+  
+  // Get total count
+  const total = await prisma.user.count({ where });
+  
+  // Get students
+  const students = await prisma.user.findMany({
+    where,
+    skip,
+    take: parseInt(limit),
+    orderBy: { [sortBy]: sortOrder },
+    select: {
+      id: true,
+      studentId: true,
+      email: true,
+      fullName: true,
+      role: true,
+      status: true,
+      studentIdVerified: true,
+      isPreApproved: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          enrollments: true,
+        },
+      },
+    },
+  });
+  
+  return {
+    students,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Get single student with full details
+ */
+async function getStudentById(id) {
+  const student = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      enrollments: {
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              price: true,
+            },
+          },
+          batch: {
+            select: {
+              id: true,
+              name: true,
+              tutorName: true,
+            },
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              status: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
+      attendance: {
+        select: {
+          id: true,
+          date: true,
+          status: true,
+          batchId: true,
+        },
+        orderBy: { date: 'desc' },
+        take: 10,
+      },
+      notifications: {
+        select: {
+          id: true,
+          title: true,
+          message: true,
+          read: true,
+          sentAt: true,
+        },
+        orderBy: { sentAt: 'desc' },
+        take: 5,
+      },
+    },
+  });
+  
+  if (!student) {
+    throw new Error('Student not found');
+  }
+  
+  // Remove password hash from response
+  delete student.passwordHash;
+  delete student.otpCode;
+  delete student.otpExpiry;
+  
+  return student;
+}
+
+/**
+ * Get student enrollments
+ */
+async function getStudentEnrollments(studentId) {
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId: studentId },
+    include: {
+      course: true,
+      batch: true,
+      payments: true,
+    },
+  });
+  
+  return enrollments;
+}
+
+/**
+ * Get student progress
+ */
+async function getStudentProgress(studentId, courseId = null) {
+  const where = { userId: studentId };
+  if (courseId) {
+    where.lesson = {
+      module: {
+        courseId,
+      },
+    };
+  }
+  
+  const watchLogs = await prisma.watchLog.findMany({
+    where,
+    include: {
+      lesson: {
+        include: {
+          module: {
+            select: {
+              title: true,
+              courseId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  
+  return watchLogs;
+}
+
+/**
+ * Remove student enrollment
+ */
+async function removeEnrollment(studentId, enrollmentId) {
+  // Verify enrollment belongs to student
+  const enrollment = await prisma.enrollment.findFirst({
+    where: {
+      id: enrollmentId,
+      userId: studentId,
+    },
+  });
+  
+  if (!enrollment) {
+    throw new Error('Enrollment not found');
+  }
+  
+  await prisma.enrollment.delete({
+    where: { id: enrollmentId },
+  });
+  
+  return { message: 'Enrollment removed successfully' };
+}
+
+/**
+ * Update student status
+ */
+async function updateStudentStatus(id, status) {
+  const student = await prisma.user.update({
+    where: { id },
+    data: { status },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      status: true,
+    },
+  });
+  
+  return student;
+}
+
+/**
+ * Reset student password (admin action)
+ */
+async function resetStudentPassword(id, newPassword) {
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  
+  await prisma.user.update({
+    where: { id },
+    data: { passwordHash },
+  });
+  
+  return { message: 'Password reset successfully' };
+}
+
+/**
+ * Get all pre-approved students
+ */
+async function getAllPreApproved() {
+  const preApproved = await prisma.preApprovedStudent.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+  
+  return preApproved;
+}
+
+/**
+ * Delete pre-approved student
+ */
+async function deletePreApproved(id) {
+  await prisma.preApprovedStudent.delete({
+    where: { id },
+  });
+  
+  return { message: 'Pre-approved student deleted' };
+}
+
+/**
+ * Bulk status update
+ */
+async function bulkUpdateStatus(studentIds, status) {
+  const result = await prisma.user.updateMany({
+    where: {
+      id: { in: studentIds },
+      role: 'STUDENT',
+    },
+    data: { status },
+  });
+  
+  return {
+    message: `Updated ${result.count} students`,
+    count: result.count,
+  };
+}
+
+/**
+ * Bulk assign to course
+ */
+async function bulkAssignToCourse(studentIds, courseId, batchId = null) {
+  const results = {
+    success: [],
+    failed: [],
+  };
+  
+  for (const studentId of studentIds) {
+    try {
+      const enrollment = await assignToCourse(studentId, courseId, batchId);
+      results.success.push({ studentId, enrollment });
+    } catch (error) {
+      results.failed.push({ studentId, error: error.message });
+    }
+  }
+  
+  return results;
+}
+
 module.exports = {
   createStudent,
   updateStudent,
@@ -256,4 +564,15 @@ module.exports = {
   assignToBatch,
   bulkUploadStudents,
   addPreApprovedStudent,
+  getAllStudents,
+  getStudentById,
+  getStudentEnrollments,
+  getStudentProgress,
+  removeEnrollment,
+  updateStudentStatus,
+  resetStudentPassword,
+  getAllPreApproved,
+  deletePreApproved,
+  bulkUpdateStatus,
+  bulkAssignToCourse,
 };

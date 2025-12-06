@@ -177,6 +177,217 @@ async function addPreApproved(req, res, next) {
   }
 }
 
+/**
+ * Get all students with pagination and filtering
+ */
+async function getAllStudents(req, res, next) {
+  try {
+    const { page, limit, search, status, courseId, batchId, sortBy, sortOrder } = req.query;
+    
+    const result = await adminStudentService.getAllStudents({
+      page,
+      limit,
+      search,
+      status,
+      courseId,
+      batchId,
+      sortBy,
+      sortOrder,
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get single student with full details
+ */
+async function getStudentById(req, res, next) {
+  try {
+    const { id } = req.params;
+    
+    const student = await adminStudentService.getStudentById(id);
+    
+    res.status(200).json({
+      success: true,
+      data: { student },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get student enrollments
+ */
+async function getStudentEnrollments(req, res, next) {
+  try {
+    const { id } = req.params;
+    
+    const enrollments = await adminStudentService.getStudentEnrollments(id);
+    
+    res.status(200).json({
+      success: true,
+      data: { enrollments },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get student progress
+ */
+async function getStudentProgress(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { courseId } = req.query;
+    
+    const progress = await adminStudentService.getStudentProgress(id, courseId);
+    
+    res.status(200).json({
+      success: true,
+      data: { progress },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Remove student enrollment
+ */
+async function removeEnrollment(req, res, next) {
+  try {
+    const { id, enrollmentId } = req.params;
+    
+    const result = await adminStudentService.removeEnrollment(id, enrollmentId);
+    
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Update student status
+ */
+async function updateStudentStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const student = await adminStudentService.updateStudentStatus(id, status);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Student status updated successfully',
+      data: { student },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Reset student password
+ */
+async function resetPassword(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    const result = await adminStudentService.resetStudentPassword(id, newPassword);
+    
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get all pre-approved students
+ */
+async function getPreApproved(req, res, next) {
+  try {
+    const preApproved = await adminStudentService.getAllPreApproved();
+    
+    res.status(200).json({
+      success: true,
+      data: { preApproved },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Delete pre-approved student
+ */
+async function deletePreApproved(req, res, next) {
+  try {
+    const { id } = req.params;
+    
+    const result = await adminStudentService.deletePreApproved(id);
+    
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Bulk status update
+ */
+async function bulkStatusUpdate(req, res, next) {
+  try {
+    const { studentIds, status } = req.body;
+    
+    const result = await adminStudentService.bulkUpdateStatus(studentIds, status);
+    
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: { count: result.count },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Bulk assign to course
+ */
+async function bulkAssignCourse(req, res, next) {
+  try {
+    const { studentIds, courseId, batchId } = req.body;
+    
+    const results = await adminStudentService.bulkAssignToCourse(studentIds, courseId, batchId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Bulk assignment completed',
+      data: results,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createStudent,
   updateStudent,
@@ -186,4 +397,15 @@ module.exports = {
   bulkUpload,
   addPreApproved,
   upload, // Export multer middleware
+  getAllStudents,
+  getStudentById,
+  getStudentEnrollments,
+  getStudentProgress,
+  removeEnrollment,
+  updateStudentStatus,
+  resetPassword,
+  getPreApproved,
+  deletePreApproved,
+  bulkStatusUpdate,
+  bulkAssignCourse,
 };

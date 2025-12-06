@@ -21,6 +21,7 @@ const enrollmentRoutes = require('./routes/enrollment.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const adminRoutes = require('./routes/admin.routes');
 const adminStudentsRoutes = require('./routes/admin.students.routes');
+const adminCoursesRoutes = require('./routes/admin.courses.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
 
@@ -50,6 +51,7 @@ app.use('/enrollments', enrollmentRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/students', adminStudentsRoutes);
+app.use('/admin/courses', adminCoursesRoutes);
 app.use('/student', studentRoutes);
 app.use('/notifications', notificationRoutes);
 

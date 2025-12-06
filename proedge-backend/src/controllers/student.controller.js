@@ -99,10 +99,108 @@ async function getCourseProgress(req, res, next) {
   }
 }
 
+/**
+ * Get student profile
+ */
+async function getProfile(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    
+    const profile = await studentService.getProfile(userId);
+    
+    res.status(200).json({
+      success: true,
+      data: { profile },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Update student profile
+ */
+async function updateProfile(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const data = req.body;
+    
+    const profile = await studentService.updateProfile(userId, data);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { profile },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Change password
+ */
+async function changePassword(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const { oldPassword, newPassword } = req.body;
+    
+    const result = await studentService.changePassword(userId, oldPassword, newPassword);
+    
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get attendance records
+ */
+async function getAttendance(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    
+    const attendance = await studentService.getAttendance(userId);
+    
+    res.status(200).json({
+      success: true,
+      data: { attendance },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get payment history
+ */
+async function getPayments(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    
+    const payments = await studentService.getPayments(userId);
+    
+    res.status(200).json({
+      success: true,
+      data: { payments },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getEnrolledCourses,
   getCourseDetails,
   getCourseModules,
   getLessonDetails,
   getCourseProgress,
+  getProfile,
+  updateProfile,
+  changePassword,
+  getAttendance,
+  getPayments,
 };

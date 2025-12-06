@@ -300,10 +300,175 @@ async function getCourseProgress(userId, courseId) {
   };
 }
 
+/**
+ * Get student profile
+ */
+async function getProfile(userId) {
+  const student = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      studentId: true,
+      email: true,
+      fullName: true,
+      role: true,
+      status: true,
+      studentIdVerified: true,
+      isPreApproved: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          enrollments: true,
+        },
+      },
+    },
+  });
+  
+  if (!student) {
+    throw new Error('Student not found');
+  }
+  
+  return student;
+}
+
+/**
+ * Update student profile
+ */
+async function updateProfile(userId, data) {
+  const { fullName, email } = data;
+  
+  // Check if email is already taken by another user
+  if (email) {
+    const existing = await prisma.user.findFirst({
+      where: {
+        email,
+        id: { not: userId },
+      },
+    });
+    
+    if (existing) {
+      throw new Error('Email already in use');
+    }
+  }
+  
+  const student = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(fullName && { fullName }),
+      ...(email && { email }),
+    },
+    select: {
+      id: true,
+      studentId: true,
+      email: true,
+      fullName: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+  
+  return student;
+}
+
+/**
+ * Change student password
+ */
+async function changePassword(userId, oldPassword, newPassword) {
+  const bcrypt = require('bcryptjs');
+  
+  // Get user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  // Verify old password
+  const isValid = await bcrypt.compare(oldPassword, user.passwordHash);
+  if (!isValid) {
+    throw new Error('Current password is incorrect');
+  }
+  
+  // Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  
+  // Update password
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash },
+  });
+  
+  return { message: 'Password changed successfully' };
+}
+
+/**
+ * Get student attendance records
+ */
+async function getAttendance(userId) {
+  const attendance = await prisma.attendance.findMany({
+    where: { userId },
+    include: {
+      batch: {
+        select: {
+          id: true,
+          name: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { date: 'desc' },
+  });
+  
+  return attendance;
+}
+
+/**
+ * Get student payment history
+ */
+async function getPayments(userId) {
+  const payments = await prisma.payment.findMany({
+    where: {
+      enrollment: {
+        userId,
+      },
+    },
+    include: {
+      enrollment: {
+        select: {
+          id: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+      invoice: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  
+  return payments;
+}
+
 module.exports = {
   getEnrolledCourses,
   getCourseDetails,
   getCourseModules,
   getLessonDetails,
   getCourseProgress,
+  getProfile,
+  updateProfile,
+  changePassword,
+  getAttendance,
+  getPayments,
 };

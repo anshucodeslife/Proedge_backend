@@ -103,4 +103,59 @@ router.get('/lessons/:lessonId', studentController.getLessonDetails);
  */
 router.get('/courses/:courseId/progress', studentController.getCourseProgress);
 
+/**
+ * @swagger
+ * /student/profile:
+ *   get:
+ *     summary: Get student profile
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/profile', studentController.getProfile);
+
+/**
+ * @swagger
+ * /student/profile:
+ *   put:
+ *     summary: Update student profile
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/profile', studentController.updateProfile);
+
+/**
+ * @swagger
+ * /student/change-password:
+ *   post:
+ *     summary: Change password
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/change-password', studentController.changePassword);
+
+/**
+ * @swagger
+ * /student/attendance:
+ *   get:
+ *     summary: Get attendance records
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/attendance', studentController.getAttendance);
+
+/**
+ * @swagger
+ * /student/payments:
+ *   get:
+ *     summary: Get payment history
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/payments', studentController.getPayments);
+
 module.exports = router;

@@ -31,6 +31,16 @@ const updateModule = async (req, res, next) => {
   }
 };
 
+const deleteModule = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await lmsService.deleteModule(id);
+    success(res, result, 'Module deleted successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Lesson controllers
 const createLesson = async (req, res, next) => {
   try {
@@ -56,6 +66,16 @@ const updateLesson = async (req, res, next) => {
     const { id } = req.params;
     const result = await lmsService.updateLesson(id, req.body);
     success(res, result, 'Lesson updated successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteLesson = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await lmsService.deleteLesson(id);
+    success(res, result, 'Lesson deleted successfully');
   } catch (err) {
     next(err);
   }
@@ -91,14 +111,27 @@ const updateBatch = async (req, res, next) => {
   }
 };
 
+const deleteBatch = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await lmsService.deleteBatch(id);
+    success(res, result, 'Batch deleted successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createModule,
   getModulesByCourse,
   updateModule,
+  deleteModule,
   createLesson,
   getLessonsByModule,
   updateLesson,
+  deleteLesson,
   createBatch,
   getBatches,
   updateBatch,
+  deleteBatch,
 };
