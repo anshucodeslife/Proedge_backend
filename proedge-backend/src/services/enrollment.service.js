@@ -49,7 +49,20 @@ const initiateEnrollment = async (data) => {
     subjects: enrollmentDetails.academic?.subjects,
 
     // Preferences
-    batchTiming
+    batchTiming,
+
+    // Fees & Payment (From EnrollModal)
+    totalFees: enrollmentDetails.totalFees,
+    originalFees: enrollmentDetails.originalFees,
+    paymentOption: enrollmentDetails.paymentOption,
+
+    // Installments
+    installment1Amount: enrollmentDetails.paymentPlan?.inst1,
+    installment2Amount: enrollmentDetails.paymentPlan?.inst2,
+    installment3Amount: enrollmentDetails.paymentPlan?.inst3,
+
+    installment2Date: enrollmentDetails.paymentPlan?.dueDate2,
+    installment3Date: enrollmentDetails.paymentPlan?.dueDate3,
   };
 
   // 1. Find or Create User
@@ -99,16 +112,25 @@ const initiateEnrollment = async (data) => {
   });
 
   // 5. Create Razorpay Order
-  const amount = Number(course.price); // Use course price, not MRP
+  // 5. Create Razorpay Order
+  // Support for Partial Payment / Installments defined by frontend
+  let amountToCharge = Number(data.amount);
 
-  if (amount <= 0) {
+  if (!amountToCharge || amountToCharge <= 0) {
+    const course = await prisma.course.findUnique({ where: { id: Number(courseId) } });
+    if (!course) throw { statusCode: 404, message: 'Course not found' };
+    amountToCharge = Number(course.price);
+  }
+
+  // Double check if free
+  if (amountToCharge <= 0) {
     // Free course, activate immediately
     await prisma.enrollment.update({ where: { id: enrollment.id }, data: { status: 'ACTIVE' } });
     return { success: true, message: 'Enrolled successfully (Free Course)', enrollmentId: enrollment.id };
   }
 
   const { order } = await paymentService.createOrder({
-    amount, // Amount in full units (e.g. 5000 INR)
+    amount: amountToCharge,
     currency: 'INR',
     enrollmentId: enrollment.id
   });
