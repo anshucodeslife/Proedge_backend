@@ -192,6 +192,33 @@ async function getPayments(req, res, next) {
   }
 }
 
+/**
+ * Update watch progress for a lesson
+ */
+async function updateWatchProgress(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { lessonId } = req.params;
+    const { watchedSec, lastPosition, completed } = req.body;
+
+    const result = await studentService.updateWatchProgress(
+      userId,
+      lessonId,
+      watchedSec,
+      lastPosition,
+      completed
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Watch progress updated successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getEnrolledCourses,
   getCourseDetails,
@@ -203,4 +230,5 @@ module.exports = {
   changePassword,
   getAttendance,
   getPayments,
+  updateWatchProgress,
 };

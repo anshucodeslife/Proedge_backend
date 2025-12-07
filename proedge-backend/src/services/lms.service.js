@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 
+// LMS Service - Module and Lesson CRUD operations
 // Module CRUD
 const createModule = async (data) => {
   const { title, order, courseId } = data;
@@ -44,9 +45,20 @@ const getLessonsByModule = async (moduleId) => {
 };
 
 const updateLesson = async (id, data) => {
+  // Filter out fields that don't exist in the Lesson model
+  const { type, id: lessonId, createdAt, updatedAt, module, ...validData } = data;
+
+  // Convert numeric fields
+  const updateData = {
+    ...validData,
+    ...(validData.order !== undefined && { order: Number(validData.order) }),
+    ...(validData.moduleId !== undefined && { moduleId: Number(validData.moduleId) }),
+    ...(validData.durationSec !== undefined && { durationSec: Number(validData.durationSec) }),
+  };
+
   return await prisma.lesson.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 

@@ -164,6 +164,7 @@ async function getCourseModules(userId, courseId) {
           title: true,
           order: true,
           durationSec: true,
+          videoUrl: true, // Include video URL for immediate playback
         },
       },
     },
@@ -232,9 +233,19 @@ async function getLessonDetails(userId, lessonId) {
   // Generate signed URL if video exists
   let signedUrl = null;
   if (videoUrl) {
-    // Extract S3 key from URL (assuming format: s3://bucket/key or https://...)
-    const key = videoUrl.replace(/^s3:\/\/[^\/]+\//, '');
-    signedUrl = await s3Service.getSignedUrl(key);
+    try {
+      // Extract S3 key from URL (assuming format: s3://bucket/key or just the key)
+      const key = videoUrl.replace(/^s3:\/\/[^\/]+\//, '');
+      signedUrl = await s3Service.getSignedUrl(key);
+    } catch (err) {
+      console.error('Failed to generate signed URL, using direct URL:', err.message);
+      // Fallback to direct URL if signing fails
+      if (videoUrl.startsWith('http')) {
+        signedUrl = videoUrl;
+      } else {
+        signedUrl = `https://proedge-lms.s3.ap-south-1.amazonaws.com/${videoUrl}`;
+      }
+    }
   }
 
   // Get watch progress
@@ -522,6 +533,74 @@ async function getPayments(userId) {
   return payments;
 }
 
+/**
+ * Update watch progress for a lesson
+ */
+async function updateWatchProgress(userId, lessonId, watchedSec, lastPosition, completed = false) {
+  if (!userId) throw new Error('User ID is required');
+  if (!lessonId) throw new Error('Lesson ID is required');
+
+  // Get lesson to verify enrollment
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: parseInt(lessonId) },
+    include: {
+      module: true,
+    },
+  });
+
+  if (!lesson) {
+    throw new Error('Lesson not found');
+  }
+
+  // Verify enrollment
+  const enrollment = await prisma.enrollment.findFirst({
+    where: {
+      userId,
+      courseId: lesson.module.courseId,
+      status: 'ACTIVE',
+    },
+  });
+
+  if (!enrollment) {
+    throw new Error('Not enrolled in this course');
+  }
+
+  // Calculate percentage
+  const percentage = lesson.durationSec > 0
+    ? Math.min(100, Math.round((watchedSec / lesson.durationSec) * 100))
+    : 0;
+
+  // Mark as completed if reached 90% or more
+  const isCompleted = completed || percentage >= 90;
+
+  // Upsert watch log
+  const watchLog = await prisma.watchLog.upsert({
+    where: {
+      userId_lessonId: {
+        userId,
+        lessonId: parseInt(lessonId),
+      },
+    },
+    update: {
+      watchedSec: Math.max(watchedSec, 0),
+      lastPosition: lastPosition || watchedSec,
+      percentage,
+      completed: isCompleted,
+      updatedAt: new Date(),
+    },
+    create: {
+      userId,
+      lessonId: parseInt(lessonId),
+      watchedSec: Math.max(watchedSec, 0),
+      lastPosition: lastPosition || watchedSec,
+      percentage,
+      completed: isCompleted,
+    },
+  });
+
+  return watchLog;
+}
+
 module.exports = {
   getEnrolledCourses,
   getCourseDetails,
@@ -533,4 +612,5 @@ module.exports = {
   changePassword,
   getAttendance,
   getPayments,
+  updateWatchProgress,
 };

@@ -158,4 +158,37 @@ router.get('/attendance', studentController.getAttendance);
  */
 router.get('/payments', studentController.getPayments);
 
+/**
+ * @swagger
+ * /student/lessons/{lessonId}/progress:
+ *   post:
+ *     summary: Update watch progress for a lesson
+ *     tags: [Student]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               watchedSec:
+ *                 type: number
+ *               lastPosition:
+ *                 type: number
+ *               completed:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Watch progress updated successfully
+ */
+router.post('/lessons/:lessonId/progress', studentController.updateWatchProgress);
+
 module.exports = router;
