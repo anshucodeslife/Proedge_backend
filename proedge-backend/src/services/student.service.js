@@ -43,11 +43,13 @@ async function getEnrolledCourses(userId) {
  * Get course details for enrolled student
  */
 async function getCourseDetails(userId, courseId) {
+  if (!userId) throw new Error('User ID is required');
+
   // Verify enrollment
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       userId,
-      courseId,
+      courseId: parseInt(courseId),
       status: 'ACTIVE',
     },
     include: {
@@ -61,7 +63,7 @@ async function getCourseDetails(userId, courseId) {
 
   // Get course with modules
   const course = await prisma.course.findUnique({
-    where: { id: courseId },
+    where: { id: parseInt(courseId) },
     include: {
       modules: {
         orderBy: { order: 'asc' },
@@ -84,11 +86,13 @@ async function getCourseDetails(userId, courseId) {
  * Get modules for enrolled course
  */
 async function getCourseModules(userId, courseId) {
+  if (!userId) throw new Error('User ID is required');
+
   // Verify enrollment
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       userId,
-      courseId,
+      courseId: parseInt(courseId),
       status: 'ACTIVE',
     },
   });
@@ -98,7 +102,7 @@ async function getCourseModules(userId, courseId) {
   }
 
   const modules = await prisma.module.findMany({
-    where: { courseId },
+    where: { courseId: parseInt(courseId) },
     include: {
       lessons: {
         orderBy: { order: 'asc' },
@@ -120,9 +124,11 @@ async function getCourseModules(userId, courseId) {
  * Get lesson details with batch-specific video URL
  */
 async function getLessonDetails(userId, lessonId) {
+  if (!userId) throw new Error('User ID is required');
+
   // Get lesson
   const lesson = await prisma.lesson.findUnique({
-    where: { id: lessonId },
+    where: { id: parseInt(lessonId) },
     include: {
       module: {
         include: {
@@ -154,7 +160,7 @@ async function getLessonDetails(userId, lessonId) {
 
   // Check for batch-specific video
   let videoUrl = lesson.videoUrl;
-  
+
   if (enrollment.batchId) {
     const batchVideo = await prisma.batchVideoMap.findUnique({
       where: {
@@ -183,7 +189,7 @@ async function getLessonDetails(userId, lessonId) {
     where: {
       userId_lessonId: {
         userId,
-        lessonId,
+        lessonId: parseInt(lessonId),
       },
     },
   });
@@ -210,11 +216,13 @@ async function getLessonDetails(userId, lessonId) {
  * Get course progress for student
  */
 async function getCourseProgress(userId, courseId) {
+  if (!userId) throw new Error('User ID is required');
+
   // Verify enrollment
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       userId,
-      courseId,
+      courseId: parseInt(courseId),
       status: 'ACTIVE',
     },
   });
@@ -227,7 +235,7 @@ async function getCourseProgress(userId, courseId) {
   const lessons = await prisma.lesson.findMany({
     where: {
       module: {
-        courseId,
+        courseId: parseInt(courseId),
       },
     },
     select: {
@@ -324,11 +332,11 @@ async function getProfile(userId) {
       },
     },
   });
-  
+
   if (!student) {
     throw new Error('Student not found');
   }
-  
+
   return student;
 }
 
@@ -337,7 +345,7 @@ async function getProfile(userId) {
  */
 async function updateProfile(userId, data) {
   const { fullName, email } = data;
-  
+
   // Check if email is already taken by another user
   if (email) {
     const existing = await prisma.user.findFirst({
@@ -346,12 +354,12 @@ async function updateProfile(userId, data) {
         id: { not: userId },
       },
     });
-    
+
     if (existing) {
       throw new Error('Email already in use');
     }
   }
-  
+
   const student = await prisma.user.update({
     where: { id: userId },
     data: {
@@ -367,7 +375,7 @@ async function updateProfile(userId, data) {
       updatedAt: true,
     },
   });
-  
+
   return student;
 }
 
@@ -376,31 +384,31 @@ async function updateProfile(userId, data) {
  */
 async function changePassword(userId, oldPassword, newPassword) {
   const bcrypt = require('bcryptjs');
-  
+
   // Get user
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
-  
+
   if (!user) {
     throw new Error('User not found');
   }
-  
+
   // Verify old password
   const isValid = await bcrypt.compare(oldPassword, user.passwordHash);
   if (!isValid) {
     throw new Error('Current password is incorrect');
   }
-  
+
   // Hash new password
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  
+
   // Update password
   await prisma.user.update({
     where: { id: userId },
     data: { passwordHash },
   });
-  
+
   return { message: 'Password changed successfully' };
 }
 
@@ -419,6 +427,7 @@ async function getAttendance(userId) {
             select: {
               id: true,
               title: true,
+              slug: true,
             },
           },
         },
@@ -426,7 +435,7 @@ async function getAttendance(userId) {
     },
     orderBy: { date: 'desc' },
   });
-  
+
   return attendance;
 }
 
@@ -456,7 +465,7 @@ async function getPayments(userId) {
     },
     orderBy: { createdAt: 'desc' },
   });
-  
+
   return payments;
 }
 

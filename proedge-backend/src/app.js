@@ -24,6 +24,7 @@ const adminStudentsRoutes = require('./routes/admin.students.routes');
 const adminCoursesRoutes = require('./routes/admin.courses.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const attendanceRoutes = require('./routes/attendance.routes');
 
 const systemRoutes = require('./routes/system.routes');
 const logRoutes = require('./routes/log.routes');
@@ -60,6 +61,7 @@ app.use('/admin/students', adminStudentsRoutes);
 app.use('/admin/courses', adminCoursesRoutes);
 app.use('/student', studentRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/admin/attendance', attendanceRoutes);
 
 // Merged Routes (Phase 5)
 app.use('/system', systemRoutes);

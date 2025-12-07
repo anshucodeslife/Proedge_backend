@@ -8,26 +8,26 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  studentId         String?  @unique
-  email             String   @unique
+  id                Int       @id @default(autoincrement())
+  studentId         String?   @unique
+  email             String    @unique
   passwordHash      String
   fullName          String
-  role              Role     @default(STUDENT)
-  status            Status   @default(ACTIVE)
-  studentIdVerified Boolean  @default(false)
-  isPreApproved     Boolean  @default(false)
+  role              Role      @default(STUDENT)
+  status            Status    @default(ACTIVE)
+  studentIdVerified Boolean   @default(false)
+  isPreApproved     Boolean   @default(false)
   otpCode           String?
   otpExpiry         DateTime?
-  
+
   // Personal Info
-  contact        String?
-  dob            String?
-  gender         String?
-  address        String?
-  parentName     String? @map("parent_name")
-  parentContact  String? @map("parent_contact")
-  
+  contact       String?
+  dob           String?
+  gender        String?
+  address       String?
+  parentName    String? @map("parent_name")
+  parentContact String? @map("parent_contact")
+
   // Academic Info
   currentSchool  String? @map("current_school")
   classYear      String? @map("class_year")
@@ -35,12 +35,12 @@ model User {
   educationLevel String? @map("education_level")
   school         String?
   board          String?
-  
+
   // Course Linking
-  courseId       Int?    @map("course_id")
-  course         Course? @relation(fields: [courseId], references: [id])
-  courseName     String? @map("course_name")
-  batchTiming    String? @map("batch_timing")
+  courseId    Int?    @map("course_id")
+  course      Course? @relation(fields: [courseId], references: [id])
+  courseName  String? @map("course_name")
+  batchTiming String? @map("batch_timing")
 
   // Fees & Payment Info
   totalFees     Decimal? @map("total_fees")
@@ -49,12 +49,12 @@ model User {
   paymentMode   String?  @map("payment_mode")
   paymentOption String?  @map("payment_option")
   referenceNo   String?  @map("reference_no")
-  
+
   // Installments
   installment1Amount Decimal? @map("installment1_amount")
   installment1Date   String?  @map("installment1_date")
   installment1Paid   Boolean  @default(false) @map("installment1_paid")
-  
+
   installment2Amount Decimal? @map("installment2_amount")
   installment2Date   String?  @map("installment2_date")
   installment2Paid   Boolean  @default(false) @map("installment2_paid")
@@ -64,83 +64,83 @@ model User {
   installment3Paid   Boolean  @default(false) @map("installment3_paid")
 
   // Referral
-  referralCode   String?   @map("referral_code")
-  referralAmount Decimal?  @map("referral_amount")
+  referralCode   String?  @map("referral_code")
+  referralAmount Decimal? @map("referral_amount")
 
   // Meta & Emergency
-  studentSignature String? @map("student_signature")
-  parentSignature  String? @map("parent_signature")
-  submissionDate   String? @map("submission_date")
+  studentSignature  String? @map("student_signature")
+  parentSignature   String? @map("parent_signature")
+  submissionDate    String? @map("submission_date")
   emergencyName     String? @map("emergency_name")
   emergencyRelation String? @map("emergency_relation")
   emergencyPhone    String? @map("emergency_phone")
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  deletedAt         DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? @map("deleted_at")
 
-  enrollments       Enrollment[]
-  attendance        Attendance[]
-  watchLogs         WatchLog[]
-  notifications     Notification[]
+  enrollments   Enrollment[]
+  attendance    Attendance[]
+  watchLogs     WatchLog[]
+  notifications Notification[]
 }
 
 model Course {
-  id          Int      @id @default(autoincrement())
-  title       String   @unique
-  slug        String   @unique
-  description String?
-  image       String?
-  thumbnail   String?
-  price       Decimal  @default(0)
-  mrp         Decimal  @default(0)
-  currency    String   @default("INR")
-  isPaid      Boolean  @default(false)
-  active      Boolean  @default(true)
-  validityDays Int?
-  duration    String?
-  lectures    String?
-  projects    String?
-  certificate String?
-  access      String?
-  modules     Module[]
-  batches     Batch[]
-  enrollments Enrollment[]
-  students    User[]
+  id               Int               @id @default(autoincrement())
+  title            String            @unique
+  slug             String            @unique
+  description      String?
+  image            String?
+  thumbnail        String?
+  price            Decimal           @default(0)
+  mrp              Decimal           @default(0)
+  currency         String            @default("INR")
+  isPaid           Boolean           @default(false)
+  active           Boolean           @default(true)
+  validityDays     Int?
+  duration         String?
+  lectures         String?
+  projects         String?
+  certificate      String?
+  access           String?
+  modules          Module[]
+  batches          Batch[]
+  enrollments      Enrollment[]
+  students         User[]
   batch1admissions Batch1admission[]
   enquiries        Enquiry[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime? // Soft Delete
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime? // Soft Delete
 }
 
 model Module {
-  id        Int      @id @default(autoincrement())
-  title     String
-  order     Int
-  course    Course   @relation(fields: [courseId], references: [id])
-  courseId  Int
-  lessons   Lesson[]
+  id       Int      @id @default(autoincrement())
+  title    String
+  order    Int
+  course   Course   @relation(fields: [courseId], references: [id])
+  courseId Int
+  lessons  Lesson[]
 }
 
 model Lesson {
-  id             Int      @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   title          String
   order          Int
   videoUrl       String?
   durationSec    Int?
   attachments    Json?
-  module         Module   @relation(fields: [moduleId], references: [id])
+  module         Module          @relation(fields: [moduleId], references: [id])
   moduleId       Int
   watchLogs      WatchLog[]
   batchVideoMaps BatchVideoMap[]
 }
 
 model Batch {
-  id             Int      @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   name           String
   tutorName      String?
-  course         Course   @relation(fields: [courseId], references: [id])
+  course         Course          @relation(fields: [courseId], references: [id])
   courseId       Int
   priceOverride  Float?
   startDate      DateTime?
@@ -151,34 +151,34 @@ model Batch {
 }
 
 model Enrollment {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id])
+  id         Int                 @id @default(autoincrement())
+  user       User                @relation(fields: [userId], references: [id])
   userId     Int
-  course     Course   @relation(fields: [courseId], references: [id])
+  course     Course              @relation(fields: [courseId], references: [id])
   courseId   Int
-  batch      Batch?   @relation(fields: [batchId], references: [id])
+  batch      Batch?              @relation(fields: [batchId], references: [id])
   batchId    Int?
-  status     EnrollmentStatus @default(ACTIVE)
-  enrolledAt DateTime @default(now())
+  status     EnrollmentStatus    @default(ACTIVE)
+  enrolledAt DateTime            @default(now())
   expiresAt  DateTime?
   payments   Payment[]
   history    EnrollmentHistory[]
 }
 
 model Attendance {
-  id           Int      @id @default(autoincrement())
-  user         User     @relation(fields: [userId], references: [id])
+  id           Int              @id @default(autoincrement())
+  user         User             @relation(fields: [userId], references: [id])
   userId       Int
-  batch        Batch    @relation(fields: [batchId], references: [id])
+  batch        Batch            @relation(fields: [batchId], references: [id])
   batchId      Int
   date         DateTime
   status       AttendanceStatus
-  autoMarked   Boolean  @default(false)
+  autoMarked   Boolean          @default(false)
   watchPercent Float?
   overriddenBy String?
   overrideNote String?
-  createdAt    DateTime @default(now())
-  
+  createdAt    DateTime         @default(now())
+
   @@index([userId])
   @@index([batchId])
   @@index([date])
@@ -194,55 +194,55 @@ model WatchLog {
   lastPosition Int      @default(0)
   percentage   Float    @default(0)
   completed    Boolean  @default(false)
-  events       Json?    // {play: [], pause: [], seek: []}
+  events       Json? // {play: [], pause: [], seek: []}
   sessionCount Int      @default(1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  
+
   @@unique([userId, lessonId])
   @@index([userId])
   @@index([lessonId])
 }
 
 model Payment {
-  id                Int      @id @default(autoincrement())
-  orderId           String   @unique
+  id                Int           @id @default(autoincrement())
+  orderId           String        @unique
   paymentId         String?
-  provider          String   @default("razorpay")
+  provider          String        @default("razorpay")
   providerPaymentId String?
   amount            Float
-  currency          String   @default("INR")
+  currency          String        @default("INR")
   status            PaymentStatus
   razorpaySignature String?
-  enrollment        Enrollment? @relation(fields: [enrollmentId], references: [id])
+  enrollment        Enrollment?   @relation(fields: [enrollmentId], references: [id])
   enrollmentId      Int?
   invoice           Invoice?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
   @@index([enrollmentId])
   @@index([status])
 }
 
 model Coupon {
-  id          Int      @id @default(autoincrement())
-  code        String   @unique
-  discountType DiscountType
+  id            Int          @id @default(autoincrement())
+  code          String       @unique
+  discountType  DiscountType
   discountValue Float
-  validFrom   DateTime?
-  validTo     DateTime?
-  maxUses     Int?
-  usageCount  Int @default(0)
+  validFrom     DateTime?
+  validTo       DateTime?
+  maxUses       Int?
+  usageCount    Int          @default(0)
 }
 
 model EnrollmentHistory {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
   enrollmentId Int
   action       String
   note         String?
   actor        String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
 }
 
 model PreApprovedStudent {
@@ -252,7 +252,7 @@ model PreApprovedStudent {
   email     String?
   phone     String?
   createdAt DateTime @default(now())
-  
+
   @@index([studentId])
 }
 
@@ -265,23 +265,23 @@ model BatchVideoMap {
   videoUrl  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([batchId, lessonId])
   @@index([batchId])
   @@index([lessonId])
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  type      NotificationType
-  title     String
-  message   String
-  data      Json?
-  read      Boolean  @default(false)
-  sentAt    DateTime @default(now())
-  
+  id      Int              @id @default(autoincrement())
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  Int
+  type    NotificationType
+  title   String
+  message String
+  data    Json?
+  read    Boolean          @default(false)
+  sentAt  DateTime         @default(now())
+
   @@index([userId])
   @@index([read])
   @@index([sentAt])
@@ -297,7 +297,7 @@ model Invoice {
   total     Float
   pdfUrl    String?
   createdAt DateTime @default(now())
-  
+
   @@index([invoiceNo])
 }
 
@@ -334,14 +334,14 @@ model Referral {
 }
 
 model Batch1admission {
-  id             Int     @id @default(autoincrement())
-  fullName       String  @map("full_name")
-  email          String  @unique
-  contact        String?
-  dob            String?
-  gender         String?
-  address        String?
-  
+  id       Int     @id @default(autoincrement())
+  fullName String  @map("full_name")
+  email    String  @unique
+  contact  String?
+  dob      String?
+  gender   String?
+  address  String?
+
   parentName     String? @map("parent_name")
   parentContact  String? @map("parent_contact")
   currentSchool  String? @map("current_school")
@@ -351,9 +351,9 @@ model Batch1admission {
   school         String?
   board          String?
 
-  courseId   Int?    @map("course_id")
-  course     Course? @relation(fields: [courseId], references: [id])
-  courseName String? @map("course_name")
+  courseId    Int?    @map("course_id")
+  course      Course? @relation(fields: [courseId], references: [id])
+  courseName  String? @map("course_name")
   batchTiming String? @map("batch_timing")
   duration    String?
 
@@ -371,7 +371,7 @@ model Batch1admission {
   studentSignature String? @map("student_signature")
   parentSignature  String? @map("parent_signature")
   submissionDate   String? @map("submission_date")
-  
+
   emergencyName     String? @map("emergency_name")
   emergencyRelation String? @map("emergency_relation")
   emergencyPhone    String? @map("emergency_phone")
@@ -393,20 +393,20 @@ model Batch1admission {
 }
 
 model Enquiry {
-  id             Int     @id @default(autoincrement())
-  fullName       String
-  email          String
-  contact        String
-  dob            String?
-  gender         String?
-  educationLevel String?
-  preferredCourses String?
-  otherCourse      String?
-  batchTiming      String?
+  id                Int     @id @default(autoincrement())
+  fullName          String
+  email             String
+  contact           String
+  dob               String?
+  gender            String?
+  educationLevel    String?
+  preferredCourses  String?
+  otherCourse       String?
+  batchTiming       String?
   emergencyName     String?
   emergencyRelation String?
   emergencyPhone    String?
-  
+
   courseId Int?
   course   Course? @relation(fields: [courseId], references: [id])
 

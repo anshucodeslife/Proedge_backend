@@ -5,10 +5,10 @@ const studentService = require('../services/student.service');
  */
 async function getEnrolledCourses(req, res, next) {
   try {
-    const userId = req.user.userId;
-    
+    const userId = req.user.id;
+
     const courses = await studentService.getEnrolledCourses(userId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Enrolled courses fetched successfully',
@@ -24,11 +24,11 @@ async function getEnrolledCourses(req, res, next) {
  */
 async function getCourseDetails(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { courseId } = req.params;
-    
+
     const result = await studentService.getCourseDetails(userId, courseId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Course details fetched successfully',
@@ -44,11 +44,11 @@ async function getCourseDetails(req, res, next) {
  */
 async function getCourseModules(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { courseId } = req.params;
-    
+
     const modules = await studentService.getCourseModules(userId, courseId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Modules fetched successfully',
@@ -64,11 +64,11 @@ async function getCourseModules(req, res, next) {
  */
 async function getLessonDetails(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { lessonId } = req.params;
-    
+
     const result = await studentService.getLessonDetails(userId, lessonId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Lesson details fetched successfully',
@@ -84,11 +84,11 @@ async function getLessonDetails(req, res, next) {
  */
 async function getCourseProgress(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { courseId } = req.params;
-    
+
     const progress = await studentService.getCourseProgress(userId, courseId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Course progress fetched successfully',
@@ -104,10 +104,10 @@ async function getCourseProgress(req, res, next) {
  */
 async function getProfile(req, res, next) {
   try {
-    const userId = req.user.userId;
-    
+    const userId = req.user.id;
+
     const profile = await studentService.getProfile(userId);
-    
+
     res.status(200).json({
       success: true,
       data: { profile },
@@ -122,11 +122,11 @@ async function getProfile(req, res, next) {
  */
 async function updateProfile(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const data = req.body;
-    
+
     const profile = await studentService.updateProfile(userId, data);
-    
+
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
@@ -142,11 +142,11 @@ async function updateProfile(req, res, next) {
  */
 async function changePassword(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
-    
+
     const result = await studentService.changePassword(userId, oldPassword, newPassword);
-    
+
     res.status(200).json({
       success: true,
       message: result.message,
@@ -161,10 +161,10 @@ async function changePassword(req, res, next) {
  */
 async function getAttendance(req, res, next) {
   try {
-    const userId = req.user.userId;
-    
+    const userId = req.user.id;
+
     const attendance = await studentService.getAttendance(userId);
-    
+
     res.status(200).json({
       success: true,
       data: { attendance },
@@ -179,10 +179,10 @@ async function getAttendance(req, res, next) {
  */
 async function getPayments(req, res, next) {
   try {
-    const userId = req.user.userId;
-    
+    const userId = req.user.id;
+
     const payments = await studentService.getPayments(userId);
-    
+
     res.status(200).json({
       success: true,
       data: { payments },
