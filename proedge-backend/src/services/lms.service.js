@@ -4,16 +4,21 @@ const prisma = require('../config/prisma');
 const createModule = async (data) => {
   const { title, order, courseId } = data;
   return await prisma.module.create({
-    data: { title, order, courseId },
+    data: { title, order: Number(order), courseId: Number(courseId) },
+  });
+};
+
+const getAllModules = async (courseId) => {
+  const where = courseId ? { courseId: Number(courseId) } : {};
+  return await prisma.module.findMany({
+    where,
+    include: { lessons: true },
+    orderBy: { order: 'asc' },
   });
 };
 
 const getModulesByCourse = async (courseId) => {
-  return await prisma.module.findMany({
-    where: { courseId },
-    include: { lessons: true },
-    orderBy: { order: 'asc' },
-  });
+  return await getAllModules(courseId);
 };
 
 const updateModule = async (id, data) => {
@@ -27,7 +32,7 @@ const updateModule = async (id, data) => {
 const createLesson = async (data) => {
   const { title, order, moduleId, videoUrl, durationSec, attachments } = data;
   return await prisma.lesson.create({
-    data: { title, order, moduleId, videoUrl, durationSec, attachments },
+    data: { title, order: Number(order), moduleId: Number(moduleId), videoUrl, durationSec: Number(durationSec), attachments },
   });
 };
 
@@ -49,7 +54,7 @@ const updateLesson = async (id, data) => {
 const createBatch = async (data) => {
   const { name, tutorName, courseId, priceOverride, startDate, endDate } = data;
   return await prisma.batch.create({
-    data: { name, tutorName, courseId, priceOverride, startDate, endDate },
+    data: { name, tutorName, courseId: Number(courseId), priceOverride, startDate, endDate },
   });
 };
 
@@ -79,7 +84,7 @@ async function deleteModule(id) {
   await prisma.module.delete({
     where: { id },
   });
-  
+
   return { message: 'Module deleted successfully' };
 }
 
@@ -90,7 +95,7 @@ async function deleteLesson(id) {
   await prisma.lesson.delete({
     where: { id },
   });
-  
+
   return { message: 'Lesson deleted successfully' };
 }
 
@@ -101,12 +106,13 @@ async function deleteBatch(id) {
   await prisma.batch.delete({
     where: { id },
   });
-  
+
   return { message: 'Batch deleted successfully' };
 }
 
 module.exports = {
   createModule,
+  getAllModules,
   getModulesByCourse,
   updateModule,
   createLesson,

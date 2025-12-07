@@ -22,7 +22,7 @@ const createOrder = async (data) => {
       amount,
       currency: currency || 'INR',
       status: 'INITIATED',
-      enrollmentId,
+      enrollmentId: enrollmentId ? Number(enrollmentId) : null,
     },
   });
 

@@ -33,7 +33,7 @@ const getCourseBySlug = async (req, res, next) => {
 const updateCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await courseService.updateCourse(id, req.body);
+    const result = await courseService.updateCourse(Number(id), req.body);
     success(res, result, 'Course updated successfully');
   } catch (err) {
     next(err);
@@ -43,7 +43,7 @@ const updateCourse = async (req, res, next) => {
 const deleteCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await courseService.deleteCourse(id);
+    await courseService.deleteCourse(Number(id));
     success(res, null, 'Course deleted successfully');
   } catch (err) {
     next(err);

@@ -1,7 +1,12 @@
 const prisma = require('../config/prisma');
 
 const createCourse = async (data) => {
-  const { title, slug, description, price, isPaid } = data;
+  const {
+    title, slug, description, price, mrp, isPaid,
+    image, thumbnail, active, validityDays,
+    duration, lectures, projects, certificate, access
+  } = data;
+
   const existingCourse = await prisma.course.findUnique({ where: { slug } });
   if (existingCourse) {
     throw { statusCode: 400, message: 'Slug already exists' };
@@ -12,8 +17,18 @@ const createCourse = async (data) => {
       title,
       slug,
       description,
-      price,
-      isPaid,
+      image,
+      thumbnail,
+      price: price || 0,
+      mrp: mrp || 0,
+      isPaid: isPaid || false,
+      active: active !== undefined ? active : true,
+      validityDays,
+      duration,
+      lectures,
+      projects,
+      certificate,
+      access,
     },
   });
 };

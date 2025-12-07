@@ -6,7 +6,7 @@ const adminCourseService = require('../services/admin.course.service');
 async function getAllCourses(req, res, next) {
   try {
     const { page, limit, search, sortBy, sortOrder } = req.query;
-    
+
     const result = await adminCourseService.getAllCourses({
       page,
       limit,
@@ -14,7 +14,7 @@ async function getAllCourses(req, res, next) {
       sortBy,
       sortOrder,
     });
-    
+
     res.status(200).json({
       success: true,
       data: result,
@@ -30,9 +30,9 @@ async function getAllCourses(req, res, next) {
 async function getCourseById(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const course = await adminCourseService.getCourseById(id);
-    
+
+    const course = await adminCourseService.getCourseById(Number(id));
+
     res.status(200).json({
       success: true,
       data: { course },
@@ -48,9 +48,8 @@ async function getCourseById(req, res, next) {
 async function getCourseStudents(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const students = await adminCourseService.getCourseStudents(id);
-    
+    const students = await adminCourseService.getCourseStudents(Number(id));
+
     res.status(200).json({
       success: true,
       data: { students },

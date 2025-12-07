@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Module routes
 router.post('/modules', authMiddleware, roleMiddleware(['ADMIN']), lmsController.createModule);
+router.get('/modules', lmsController.getAllModules);
 router.get('/courses/:courseId/modules', lmsController.getModulesByCourse);
 router.put('/modules/:id', authMiddleware, roleMiddleware(['ADMIN']), lmsController.updateModule);
 router.delete('/modules/:id', authMiddleware, roleMiddleware(['ADMIN']), lmsController.deleteModule);

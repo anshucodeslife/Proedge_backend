@@ -11,10 +11,20 @@ const createModule = async (req, res, next) => {
   }
 };
 
+const getAllModules = async (req, res, next) => {
+  try {
+    const { courseId } = req.query;
+    const result = await lmsService.getAllModules(courseId ? Number(courseId) : undefined);
+    success(res, result, 'Modules fetched successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getModulesByCourse = async (req, res, next) => {
   try {
     const { courseId } = req.params;
-    const result = await lmsService.getModulesByCourse(courseId);
+    const result = await lmsService.getModulesByCourse(Number(courseId));
     success(res, result, 'Modules fetched successfully');
   } catch (err) {
     next(err);
@@ -34,7 +44,7 @@ const updateModule = async (req, res, next) => {
 const deleteModule = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await lmsService.deleteModule(id);
+    const result = await lmsService.deleteModule(Number(id));
     success(res, result, 'Module deleted successfully');
   } catch (err) {
     next(err);
@@ -64,7 +74,7 @@ const getLessonsByModule = async (req, res, next) => {
 const updateLesson = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await lmsService.updateLesson(id, req.body);
+    const result = await lmsService.updateLesson(Number(id), req.body);
     success(res, result, 'Lesson updated successfully');
   } catch (err) {
     next(err);
@@ -74,7 +84,7 @@ const updateLesson = async (req, res, next) => {
 const deleteLesson = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await lmsService.deleteLesson(id);
+    const result = await lmsService.deleteLesson(Number(id));
     success(res, result, 'Lesson deleted successfully');
   } catch (err) {
     next(err);
@@ -104,7 +114,7 @@ const getBatches = async (req, res, next) => {
 const updateBatch = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await lmsService.updateBatch(id, req.body);
+    const result = await lmsService.updateBatch(Number(id), req.body);
     success(res, result, 'Batch updated successfully');
   } catch (err) {
     next(err);
@@ -114,7 +124,7 @@ const updateBatch = async (req, res, next) => {
 const deleteBatch = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await lmsService.deleteBatch(id);
+    const result = await lmsService.deleteBatch(Number(id));
     success(res, result, 'Batch deleted successfully');
   } catch (err) {
     next(err);
@@ -123,6 +133,7 @@ const deleteBatch = async (req, res, next) => {
 
 module.exports = {
   createModule,
+  getAllModules,
   getModulesByCourse,
   updateModule,
   deleteModule,

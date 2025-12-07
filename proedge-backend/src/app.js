@@ -25,6 +25,12 @@ const adminCoursesRoutes = require('./routes/admin.courses.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
 
+const systemRoutes = require('./routes/system.routes');
+const logRoutes = require('./routes/log.routes');
+const enquiryRoutes = require('./routes/enquiry.routes');
+const referralRoutes = require('./routes/referral.routes');
+const admissionRoutes = require('./routes/admission.routes');
+
 const app = express();
 
 // Security middleware
@@ -54,6 +60,13 @@ app.use('/admin/students', adminStudentsRoutes);
 app.use('/admin/courses', adminCoursesRoutes);
 app.use('/student', studentRoutes);
 app.use('/notifications', notificationRoutes);
+
+// Merged Routes (Phase 5)
+app.use('/system', systemRoutes);
+app.use('/logs', logRoutes);
+app.use('/enquiries', enquiryRoutes); // API for Enquiries
+app.use('/referrals', referralRoutes);
+app.use('/admissions', admissionRoutes); // API for Batch1Admissions
 
 // Error Handler
 app.use(errorHandler);

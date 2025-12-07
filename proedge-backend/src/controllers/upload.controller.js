@@ -10,7 +10,8 @@ const getUploadUrl = async (req, res, next) => {
     }
 
     const result = await s3Service.getSignedUploadUrl(fileName, fileType);
-    success(res, result, 'Signed upload URL generated successfully');
+    console.log('Controller Result:', result); // Debug log
+    success(res, result, 'Signed upload URL generated successfully (DEBUG MODE)');
   } catch (err) {
     next(err);
   }

@@ -23,8 +23,6 @@ const upload = multer({
   },
 });
 
-
-
 /**
  * Get all students
  */
@@ -33,13 +31,34 @@ async function getAllStudents(req, res, next) {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
+    const status = req.query.status;
+    const courseId = req.query.courseId;
+    const batchId = req.query.batchId;
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder || 'desc';
 
-    const result = await adminStudentService.getAllStudents(page, limit, search);
+    const result = await adminStudentService.getAllStudents({ page, limit, search, status, courseId, batchId, sortBy, sortOrder });
 
     res.status(200).json({
       success: true,
       message: 'Students retrieved successfully',
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Get student by ID
+ */
+async function getStudentById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const student = await adminStudentService.getStudentById(Number(id));
+    res.status(200).json({
+      success: true,
+      data: { student },
     });
   } catch (error) {
     next(error);
@@ -79,7 +98,7 @@ async function updateStudent(req, res, next) {
     const { id } = req.params;
     const data = req.body;
 
-    const student = await adminStudentService.updateStudent(id, data);
+    const student = await adminStudentService.updateStudent(Number(id), data);
 
     res.status(200).json({
       success: true,
@@ -99,7 +118,7 @@ async function deleteStudent(req, res, next) {
     const { id } = req.params;
     const { hardDelete } = req.query;
 
-    const result = await adminStudentService.deleteStudent(id, hardDelete === 'true');
+    const result = await adminStudentService.deleteStudent(Number(id), hardDelete === 'true');
 
     res.status(200).json({
       success: true,
@@ -118,7 +137,7 @@ async function assignToCourse(req, res, next) {
     const { id } = req.params;
     const { courseId, batchId } = req.body;
 
-    const enrollment = await adminStudentService.assignToCourse(id, courseId, batchId);
+    const enrollment = await adminStudentService.assignToCourse(Number(id), Number(courseId), batchId ? Number(batchId) : undefined);
 
     res.status(201).json({
       success: true,
@@ -138,7 +157,7 @@ async function assignToBatch(req, res, next) {
     const { id } = req.params;
     const { batchId } = req.body;
 
-    const enrollment = await adminStudentService.assignToBatch(id, batchId);
+    const enrollment = await adminStudentService.assignToBatch(Number(id), Number(batchId));
 
     res.status(200).json({
       success: true,
@@ -201,44 +220,15 @@ async function addPreApproved(req, res, next) {
 }
 
 /**
- * Get all students with pagination and filtering
+ * Get all pre-approved students
  */
-async function getAllStudents(req, res, next) {
+async function getPreApproved(req, res, next) {
   try {
-    const { page, limit, search, status, courseId, batchId, sortBy, sortOrder } = req.query;
-    
-    const result = await adminStudentService.getAllStudents({
-      page,
-      limit,
-      search,
-      status,
-      courseId,
-      batchId,
-      sortBy,
-      sortOrder,
-    });
-    
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+    const preApproved = await adminStudentService.getAllPreApproved();
 
-/**
- * Get single student with full details
- */
-async function getStudentById(req, res, next) {
-  try {
-    const { id } = req.params;
-    
-    const student = await adminStudentService.getStudentById(id);
-    
     res.status(200).json({
       success: true,
-      data: { student },
+      data: { preApproved },
     });
   } catch (error) {
     next(error);
@@ -251,13 +241,8 @@ async function getStudentById(req, res, next) {
 async function getStudentEnrollments(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const enrollments = await adminStudentService.getStudentEnrollments(id);
-    
-    res.status(200).json({
-      success: true,
-      data: { enrollments },
-    });
+    const enrollments = await adminStudentService.getStudentEnrollments(Number(id));
+    res.status(200).json({ success: true, data: { enrollments } });
   } catch (error) {
     next(error);
   }
@@ -270,31 +255,21 @@ async function getStudentProgress(req, res, next) {
   try {
     const { id } = req.params;
     const { courseId } = req.query;
-    
-    const progress = await adminStudentService.getStudentProgress(id, courseId);
-    
-    res.status(200).json({
-      success: true,
-      data: { progress },
-    });
+    const progress = await adminStudentService.getStudentProgress(Number(id), courseId ? Number(courseId) : undefined);
+    res.status(200).json({ success: true, data: { progress } });
   } catch (error) {
     next(error);
   }
 }
 
 /**
- * Remove student enrollment
+ * Remove enrollment
  */
 async function removeEnrollment(req, res, next) {
   try {
-    const { id, enrollmentId } = req.params;
-    
-    const result = await adminStudentService.removeEnrollment(id, enrollmentId);
-    
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    const { enrollmentId } = req.params;
+    await adminStudentService.removeEnrollment(Number(enrollmentId));
+    res.status(200).json({ success: true, message: 'Enrollment removed' });
   } catch (error) {
     next(error);
   }
@@ -307,49 +282,22 @@ async function updateStudentStatus(req, res, next) {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    
-    const student = await adminStudentService.updateStudentStatus(id, status);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Student status updated successfully',
-      data: { student },
-    });
+    const student = await adminStudentService.updateStudentStatus(Number(id), status);
+    res.status(200).json({ success: true, data: { student } });
   } catch (error) {
     next(error);
   }
 }
 
 /**
- * Reset student password
+ * Reset password
  */
 async function resetPassword(req, res, next) {
   try {
     const { id } = req.params;
     const { newPassword } = req.body;
-    
-    const result = await adminStudentService.resetStudentPassword(id, newPassword);
-    
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-/**
- * Get all pre-approved students
- */
-async function getPreApproved(req, res, next) {
-  try {
-    const preApproved = await adminStudentService.getAllPreApproved();
-    
-    res.status(200).json({
-      success: true,
-      data: { preApproved },
-    });
+    await adminStudentService.resetStudentPassword(Number(id), newPassword);
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
     next(error);
   }
@@ -361,13 +309,8 @@ async function getPreApproved(req, res, next) {
 async function deletePreApproved(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const result = await adminStudentService.deletePreApproved(id);
-    
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    await adminStudentService.deletePreApproved(Number(id));
+    res.status(200).json({ success: true, message: 'Pre-approved student deleted' });
   } catch (error) {
     next(error);
   }
@@ -379,9 +322,7 @@ async function deletePreApproved(req, res, next) {
 async function bulkStatusUpdate(req, res, next) {
   try {
     const { studentIds, status } = req.body;
-    
     const result = await adminStudentService.bulkUpdateStatus(studentIds, status);
-    
     res.status(200).json({
       success: true,
       message: result.message,
@@ -398,9 +339,7 @@ async function bulkStatusUpdate(req, res, next) {
 async function bulkAssignCourse(req, res, next) {
   try {
     const { studentIds, courseId, batchId } = req.body;
-    
     const results = await adminStudentService.bulkAssignToCourse(studentIds, courseId, batchId);
-    
     res.status(200).json({
       success: true,
       message: 'Bulk assignment completed',
@@ -419,7 +358,7 @@ module.exports = {
   assignToBatch,
   bulkUpload,
   addPreApproved,
-  upload, // Export multer middleware
+  upload,
   getAllStudents,
   getStudentById,
   getStudentEnrollments,
