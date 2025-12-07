@@ -9,7 +9,9 @@ const getUploadUrl = async (req, res, next) => {
       throw { statusCode: 400, message: 'fileName and fileType are required' };
     }
 
-    const result = await s3Service.getSignedUploadUrl(fileName, fileType);
+    // Pass folder to service
+    const result = await s3Service.getSignedUploadUrl(fileName, fileType, folder);
+
     console.log('Controller Result:', result); // Debug log
     success(res, result, 'Signed upload URL generated successfully (DEBUG MODE)');
   } catch (err) {
@@ -36,4 +38,5 @@ const getViewUrl = async (req, res, next) => {
 module.exports = {
   getUploadUrl,
   getViewUrl,
+
 };

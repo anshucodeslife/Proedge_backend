@@ -65,9 +65,27 @@ const getCourseBySlug = async (slug) => {
 };
 
 const updateCourse = async (id, data) => {
+  // Whitelist allowed fields to prevent "Unknown argument" errors (like 'code', 'type')
+  const {
+    title, slug, description, price, mrp, isPaid,
+    image, thumbnail, active, validityDays,
+    duration, lectures, projects, certificate, access, currency
+  } = data;
+
+  const updateData = {
+    title, slug, description, image, thumbnail,
+    price, mrp, isPaid, active, validityDays,
+    duration, lectures, projects, certificate, access, currency
+  };
+
+  // Remove undefined keys so we don't overwrite with null unless intended
+  Object.keys(updateData).forEach(
+    (key) => updateData[key] === undefined && delete updateData[key]
+  );
+
   return await prisma.course.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 

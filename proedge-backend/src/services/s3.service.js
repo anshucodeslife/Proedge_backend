@@ -63,19 +63,22 @@ const s3Service = {
     /**
      * Get signed URL for direct browser upload (PUT)
      */
-    getSignedUploadUrl: async (fileName, fileType) => {
+    getSignedUploadUrl: async (fileName, fileType, folder = 'general') => {
         try {
-            console.log('Generating Signed Upload URL for:', fileName, fileType);
+            // Construct key with folder
+            const key = `${folder}/${fileName}`;
+            console.log('Generating Signed Upload URL for:', key, fileType);
+
             const command = new PutObjectCommand({
                 Bucket: config.aws.bucketName,
-                Key: fileName,
+                Key: key,
                 ContentType: fileType,
             });
 
             const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
             console.log('Generated URL:', uploadUrl);
 
-            return { uploadUrl, key: fileName };
+            return { uploadUrl, key };
         } catch (error) {
             console.error('Error generating upload URL:', error);
             throw new Error('Could not generate upload URL');

@@ -20,7 +20,16 @@ const enableCors = async () => {
                     {
                         AllowedHeaders: ["*"],
                         AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
-                        AllowedOrigins: ["*"], // Allow all for development; restrict in prod
+                        AllowedOrigins: [
+                            "http://localhost:3000",
+                            "http://localhost:3001",
+                            "http://localhost:5173", // Default Vite
+                            "http://localhost:5174", // Admin
+                            "http://localhost:5176", // Student
+                            "https://proedge-admin.vercel.app",
+                            "https://www.proedgelearning.in",
+                            "*" // Fallback for dev
+                        ],
                         ExposeHeaders: ["ETag"],
                         MaxAgeSeconds: 3000
                     }
