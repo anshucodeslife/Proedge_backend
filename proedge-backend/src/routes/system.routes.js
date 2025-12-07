@@ -9,8 +9,8 @@ const roleMiddleware = require('../middlewares/role');
 router.post('/track', systemController.trackVisit); // Public
 router.get('/traffic', systemController.getTrafficStats); // Admin only
 
-// System Stats (Alias for Admin Overview)
-router.get('/stats', authMiddleware, roleMiddleware(['ADMIN']), adminController.getOverviewStats);
+// System Stats (Traffic)
+router.get('/stats', authMiddleware, roleMiddleware(['ADMIN']), systemController.getTrafficStats);
 
 // Settings
 router.get('/settings', systemController.getSettings); // Admin

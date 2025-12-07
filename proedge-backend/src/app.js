@@ -43,6 +43,10 @@ app.use(xss()); // XSS protection
 app.use(sanitizeMiddleware); // Sanitize inputs
 app.use(apiLimiter); // Rate limiting
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
+});
 
 // API Docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
@@ -56,6 +60,7 @@ app.use('/courses', courseRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/lms', lmsRoutes);
 app.use('/enrollments', enrollmentRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/students', adminStudentsRoutes);
@@ -81,6 +86,7 @@ app.use('/api/enquiries', enquiryRoutes); // Alias for /enquiries
 app.use('/api/referrals', referralRoutes); // Alias for /referrals
 app.use('/api/logs', logRoutes); // Alias for /logs
 app.use('/api/system', systemRoutes); // Alias for /system
+app.use('/api/students/batch1admissions', admissionRoutes); // Alias for /admissions
 app.use('/api/students/batch1admissions', admissionRoutes); // Alias for /admissions
 
 // Specific public legacy routes for Referrals (bypass auth)

@@ -6,19 +6,31 @@ const prisma = require('../config/prisma');
 const createOrder = async (data) => {
   const { amount, currency, enrollmentId } = data;
 
+  const keyId = config.razorpay.keyId;
+  console.log(`[Razorpay] Creating Order with Key: ${keyId ? keyId.substring(0, 8) + '...' : 'UNDEFINED'}`);
+
   const options = {
     amount: amount * 100, // amount in paise
     currency: currency || 'INR',
     receipt: `receipt_${Date.now()}`,
   };
 
-  const order = await razorpay.orders.create(options);
+  let order;
+  try {
+    order = await razorpay.orders.create(options);
+  } catch (err) {
+    console.error('Razorpay Create Order Failed:', err);
+    // If invalid key/secret, Razorpay returns 401. 
+    // We should throw a 500 or 503 instead of letting 401 confuse the frontend.
+    throw { statusCode: 500, message: 'Payment Hub Error: ' + (err.error?.description || err.message) };
+  }
 
   // Create payment record
   const payment = await prisma.payment.create({
     data: {
       provider: 'razorpay',
-      providerPaymentId: order.id,
+      orderId: order.id, // Required field mapping to Razorpay Order ID
+      providerPaymentId: null, // Will be filled after payment capture
       amount,
       currency: currency || 'INR',
       status: 'INITIATED',

@@ -23,7 +23,16 @@ const getCourses = async (req, res, next) => {
 const getCourseBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const result = await courseService.getCourseBySlug(slug);
+    let result;
+
+    // Check if the identifier is a number (ID)
+    if (!isNaN(slug) && !isNaN(parseFloat(slug))) {
+      result = await courseService.getCourseById(slug);
+    } else {
+      // Otherwise treat as slug
+      result = await courseService.getCourseBySlug(slug);
+    }
+
     success(res, result, 'Course fetched successfully');
   } catch (err) {
     next(err);
