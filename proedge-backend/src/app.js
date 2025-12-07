@@ -31,6 +31,7 @@ const logRoutes = require('./routes/log.routes');
 const enquiryRoutes = require('./routes/enquiry.routes');
 const referralRoutes = require('./routes/referral.routes');
 const admissionRoutes = require('./routes/admission.routes');
+const referralController = require('./controllers/referral.controller');
 
 const app = express();
 
@@ -72,6 +73,8 @@ app.use('/admissions', admissionRoutes); // API for Batch1Admissions
 
 // Compatibility Routes for proedgelearning-main frontend
 // These allow the old API paths to work without frontend changes
+
+app.use('/api/admin', adminRoutes); // Alias for proedge_admin dashboard routes
 app.use('/api/admin', authRoutes); // Alias for /auth (admin login)
 app.use('/api/courses', courseRoutes); // Alias for /courses
 app.use('/api/enquiries', enquiryRoutes); // Alias for /enquiries
@@ -79,7 +82,16 @@ app.use('/api/referrals', referralRoutes); // Alias for /referrals
 app.use('/api/logs', logRoutes); // Alias for /logs
 app.use('/api/system', systemRoutes); // Alias for /system
 app.use('/api/students/batch1admissions', admissionRoutes); // Alias for /admissions
+
+// Specific public legacy routes for Referrals (bypass auth)
+app.get('/api/students/referrals', referralController.getReferralStats);
+
+app.get('/api/students/by-referral', referralController.getStudentsByReferral);
+app.post('/api/students/enquiry', require('./controllers/enquiry.controller').saveEnquiry); // Public alias for enquiry form
+
 app.use('/api/students', adminStudentsRoutes); // Alias for /admin/students
+app.use('/api/admin/attendance', attendanceRoutes); // Alias for /admin/attendance
+app.use('/api/upload', uploadRoutes); // Alias for /upload
 
 // Error Handler
 app.use(errorHandler);

@@ -34,34 +34,65 @@ async function bulkCreateAttendance(date, attendanceData) {
             const attendanceLower = String(attendance).toLowerCase().trim();
             if (attendanceLower === 'absent' || attendanceLower === 'a') {
                 status = 'ABSENT';
-            } else if (attendanceLower === 'leave' || attendanceLower === 'l') {
+            } else if (['leave', 'l', 'on_leave', 'on leave', 'on-leave'].includes(attendanceLower)) {
                 status = 'ON_LEAVE';
             }
 
-            // Upsert attendance (update if exists, create if not)
-            await prisma.attendance.upsert({
+            // Upsert attendance (manual check to avoid schema unique constraint dependency)
+            const existingRecord = await prisma.attendance.findFirst({
                 where: {
-                    userId_date: {
-                        userId: user.id,
-                        date: attendanceDate,
-                    },
-                },
-                update: {
-                    status,
-                },
-                create: {
                     userId: user.id,
                     date: attendanceDate,
-                    status,
-                    batchId: null, // Can be enhanced to link to batch
                 },
             });
+
+            if (existingRecord) {
+                await prisma.attendance.update({
+                    where: { id: existingRecord.id },
+                    data: { status },
+                });
+            } else {
+                // Fetch active enrollment to get batchId
+                const enrollment = await prisma.enrollment.findFirst({
+                    where: {
+                        userId: user.id,
+                        status: 'ACTIVE' // Assuming valid enrollment is active
+                    },
+                    orderBy: { enrolledAt: 'desc' }
+                });
+
+                // Fallback to latest enrollment, then to any batch in the system
+                let batchId = enrollment?.batchId;
+
+                if (!batchId) {
+                    const defaultBatch = await prisma.batch.findFirst();
+                    batchId = defaultBatch?.id;
+                }
+
+                if (!batchId) {
+                    results.failed.push({
+                        student_id,
+                        reason: 'No batches exist in the system to assign attendance to.',
+                    });
+                    continue;
+                }
+
+                await prisma.attendance.create({
+                    data: {
+                        userId: user.id,
+                        date: attendanceDate,
+                        status,
+                        batchId: batchId,
+                    },
+                });
+            }
 
             results.success.push({
                 student_id,
                 status,
             });
         } catch (err) {
+            console.error(`Failed for ${record.student_id}:`, err);
             results.failed.push({
                 student_id: record.student_id,
                 reason: err.message,
@@ -83,7 +114,11 @@ async function getAttendance(filters) {
     if (filters.startDate || filters.endDate) {
         where.date = {};
         if (filters.startDate) where.date.gte = new Date(filters.startDate);
-        if (filters.endDate) where.date.lte = new Date(filters.endDate);
+        if (filters.endDate) {
+            const end = new Date(filters.endDate);
+            end.setHours(23, 59, 59, 999);
+            where.date.lte = end;
+        }
     }
 
     const attendance = await prisma.attendance.findMany({

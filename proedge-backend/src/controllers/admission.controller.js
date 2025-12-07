@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const bcrypt = require('bcryptjs');
 
 // Save student record (Admission Form)
 const saveBatch1Admission = async (req, res, next) => {
@@ -176,10 +177,16 @@ const enrollStudentFromAdmission = async (req, res, next) => {
         const admission = await prisma.batch1admission.findUnique({ where: { id: parseInt(id) } });
         if (!admission) return res.status(404).json({ success: false, error: "Admission not found" });
 
-        // Exclude metadata needed for User
-        const { id: _, createdAt, updatedAt, ...baseStudentData } = admission;
+        // Exclude metadata and potential schema mismatches (referralId, courseId, duration if not in User)
+        // Also excluding potential mismatch fields like submissionDate or signatures if they differ, but schema check showed they map.
+        // Duration was the specific error reported.
+        const {
+            id: _, createdAt, updatedAt, deletedAt,
+            courseId, referralId, duration, // Exclude problematic fields not in User model
+            ...baseStudentData
+        } = admission;
 
-        // Generate Student ID (Logic adapted to User table if needed, standardizing on studentId field)
+        // Generate Student ID
         const lastUser = await prisma.user.findFirst({
             where: { role: 'STUDENT', studentId: { not: null } },
             orderBy: { id: 'desc' },
@@ -194,21 +201,19 @@ const enrollStudentFromAdmission = async (req, res, next) => {
             }
         }
 
-        // Default password for auto-enrollment
-        const defaultPasswordHash = 'HASH_PLACEHOLDER'; // Ideally verify signature or handle properly later
+        // Default password (mobile number)
+        const defaultPassword = admission.contact || 'student123';
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
         const userData = {
             ...baseStudentData,
             ...additionalData,
             studentId: nextId,
             role: 'STUDENT',
-            passwordHash: defaultPasswordHash, // Needs proper hashing if implementing fully
-            fullName: admission.fullName, // Explicit mapping just in case
+            passwordHash: passwordHash,
+            fullName: admission.fullName,
             email: admission.email,
         };
-
-        // Clean up fields that might not match exact User schema if any leftovers
-        // Using simple spread for now as schema merger aligned most fields.
 
         const newUser = await prisma.user.create({
             data: userData
@@ -258,7 +263,7 @@ const enrollStudentFromEnquiry = async (req, res, next) => {
             emergencyPhone: enquiry.emergencyPhone,
 
             role: 'STUDENT',
-            passwordHash: 'HASH_PLACEHOLDER',
+            passwordHash: await bcrypt.hash(enquiry.contact || 'student123', 10),
 
             ...additionalData,
         };

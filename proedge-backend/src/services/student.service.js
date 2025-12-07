@@ -71,7 +71,9 @@ async function getEnrolledCourses(userId) {
 
       // Format thumbnail URL
       const thumbnailUrl = enrollment.course.thumbnail
-        ? `https://proedge-lms.s3.ap-south-1.amazonaws.com/${enrollment.course.thumbnail}`
+        ? (enrollment.course.thumbnail.startsWith('http')
+          ? enrollment.course.thumbnail
+          : `https://proedge-lms.s3.ap-south-1.amazonaws.com/${enrollment.course.thumbnail}`)
         : null;
 
       return {
@@ -128,6 +130,18 @@ async function getCourseDetails(userId, courseId) {
       },
     },
   });
+
+  // Format URLs
+  const formatUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `https://proedge-lms.s3.ap-south-1.amazonaws.com/${path}`;
+  };
+
+  if (course) {
+    course.thumbnail = formatUrl(course.thumbnail);
+    course.image = formatUrl(course.image);
+  }
 
   return {
     course,
@@ -479,9 +493,21 @@ async function changePassword(userId, oldPassword, newPassword) {
 /**
  * Get student attendance records
  */
-async function getAttendance(userId) {
+async function getAttendance(userId, filters = {}) {
+  const where = { userId };
+
+  if (filters.startDate || filters.endDate) {
+    where.date = {};
+    if (filters.startDate) where.date.gte = new Date(filters.startDate);
+    if (filters.endDate) {
+      const end = new Date(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      where.date.lte = end;
+    }
+  }
+
   const attendance = await prisma.attendance.findMany({
-    where: { userId },
+    where,
     include: {
       batch: {
         select: {
