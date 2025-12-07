@@ -70,6 +70,17 @@ app.use('/enquiries', enquiryRoutes); // API for Enquiries
 app.use('/referrals', referralRoutes);
 app.use('/admissions', admissionRoutes); // API for Batch1Admissions
 
+// Compatibility Routes for proedgelearning-main frontend
+// These allow the old API paths to work without frontend changes
+app.use('/api/admin', authRoutes); // Alias for /auth (admin login)
+app.use('/api/courses', courseRoutes); // Alias for /courses
+app.use('/api/enquiries', enquiryRoutes); // Alias for /enquiries
+app.use('/api/referrals', referralRoutes); // Alias for /referrals
+app.use('/api/logs', logRoutes); // Alias for /logs
+app.use('/api/system', systemRoutes); // Alias for /system
+app.use('/api/students/batch1admissions', admissionRoutes); // Alias for /admissions
+app.use('/api/students', adminStudentsRoutes); // Alias for /admin/students
+
 // Error Handler
 app.use(errorHandler);
 

@@ -80,12 +80,63 @@ const updateBatch = async (id, data) => {
  * Delete module
  */
 async function deleteModule(id) {
-  // Prisma will handle cascade delete for lessons through onDelete: Cascade
-  await prisma.module.delete({
-    where: { id },
+  // Check if module has lessons with student progress (watch logs)
+  const lessonsWithProgress = await prisma.lesson.findMany({
+    where: {
+      moduleId: id,
+      watchLogs: {
+        some: {}
+      }
+    },
+    include: {
+      _count: {
+        select: { watchLogs: true }
+      }
+    }
   });
 
-  return { message: 'Module deleted successfully' };
+  // If there are lessons with student watch logs, prevent deletion
+  if (lessonsWithProgress.length > 0) {
+    const totalWatchLogs = lessonsWithProgress.reduce((sum, lesson) => sum + lesson._count.watchLogs, 0);
+    throw new Error(
+      `Cannot delete this module because it contains ${lessonsWithProgress.length} lesson(s) with ${totalWatchLogs} student progress record(s). ` +
+      `Students have already started watching these lessons. Please archive the module instead of deleting it.`
+    );
+  }
+
+  // Delete all dependencies in a transaction
+  await prisma.$transaction(async (tx) => {
+    // Get all lesson IDs in this module
+    const lessons = await tx.lesson.findMany({
+      where: { moduleId: id },
+      select: { id: true }
+    });
+    const lessonIds = lessons.map(l => l.id);
+
+    if (lessonIds.length > 0) {
+      // Delete batch video mappings for these lessons
+      await tx.batchVideoMap.deleteMany({
+        where: { lessonId: { in: lessonIds } }
+      });
+
+      // Delete any remaining watch logs (shouldn't be any due to check above)
+      await tx.watchLog.deleteMany({
+        where: { lessonId: { in: lessonIds } }
+      });
+    }
+
+    // Delete all lessons in this module
+    await tx.lesson.deleteMany({
+      where: { moduleId: id },
+    });
+
+    // Now delete the module
+    await tx.module.delete({
+      where: { id },
+    });
+  });
+
+  return { message: 'Module and associated lessons deleted successfully' };
 }
 
 /**

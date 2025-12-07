@@ -19,6 +19,11 @@ async function getEnrolledCourses(userId) {
           description: true,
           thumbnail: true,
           price: true,
+          _count: {
+            select: {
+              modules: true,
+            },
+          },
         },
       },
       batch: {
@@ -36,7 +41,55 @@ async function getEnrolledCourses(userId) {
     },
   });
 
-  return enrollments;
+  // Get total lessons and progress for each course
+  const coursesWithProgress = await Promise.all(
+    enrollments.map(async (enrollment) => {
+      // Get total lessons in course
+      const totalLessons = await prisma.lesson.count({
+        where: {
+          module: {
+            courseId: enrollment.courseId,
+          },
+        },
+      });
+
+      // Get completed lessons
+      const completedLessons = await prisma.watchLog.count({
+        where: {
+          userId,
+          completed: true,
+          lesson: {
+            module: {
+              courseId: enrollment.courseId,
+            },
+          },
+        },
+      });
+
+      // Calculate progress percentage
+      const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+      // Format thumbnail URL
+      const thumbnailUrl = enrollment.course.thumbnail
+        ? `https://proedge-lms.s3.ap-south-1.amazonaws.com/${enrollment.course.thumbnail}`
+        : null;
+
+      return {
+        id: enrollment.course.id,
+        title: enrollment.course.title,
+        slug: enrollment.course.slug,
+        description: enrollment.course.description || 'No description available',
+        thumbnail: thumbnailUrl,
+        price: enrollment.course.price,
+        totalLessons,
+        progress,
+        enrolledAt: enrollment.enrolledAt,
+        batch: enrollment.batch,
+      };
+    })
+  );
+
+  return coursesWithProgress;
 }
 
 /**
