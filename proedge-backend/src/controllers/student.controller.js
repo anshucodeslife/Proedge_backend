@@ -162,12 +162,13 @@ async function changePassword(req, res, next) {
 async function getAttendance(req, res, next) {
   try {
     const userId = req.user.id;
+    const { startDate, endDate } = req.query;
 
-    const attendance = await studentService.getAttendance(userId);
+    const attendance = await studentService.getAttendance(userId, { startDate, endDate });
 
     res.status(200).json({
       success: true,
-      data: { attendance },
+      data: { attendance }, // Keeps structure compatible with frontend fix
     });
   } catch (error) {
     next(error);

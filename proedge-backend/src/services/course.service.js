@@ -64,6 +64,22 @@ const getCourseBySlug = async (slug) => {
   return course;
 };
 
+const getCourseById = async (id) => {
+  const course = await prisma.course.findUnique({
+    where: { id: Number(id) },
+    include: {
+      modules: {
+        include: { lessons: true },
+      },
+      batches: true,
+    },
+  });
+  if (!course) {
+    throw { statusCode: 404, message: 'Course not found' };
+  }
+  return course;
+};
+
 const updateCourse = async (id, data) => {
   // Whitelist allowed fields to prevent "Unknown argument" errors (like 'code', 'type')
   const {
@@ -97,6 +113,7 @@ module.exports = {
   createCourse,
   getCourses,
   getCourseBySlug,
+  getCourseById,
   updateCourse,
   deleteCourse,
 };

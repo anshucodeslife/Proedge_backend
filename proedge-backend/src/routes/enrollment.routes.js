@@ -6,6 +6,13 @@ const roleMiddleware = require('../middlewares/role');
 const router = express.Router();
 
 // Enrollment routes
+// Public enrollment init (Sign Up & Pay)
+// Public enrollment init (Sign Up & Pay)
+router.post('/initiate', (req, res, next) => {
+    console.log('Hits /initiate route', req.body);
+    next();
+}, enrollmentController.initiateEnrollment);
+
 router.post('/', authMiddleware, enrollmentController.enrollStudent);
 router.get('/', authMiddleware, enrollmentController.getEnrollments);
 router.put('/:id/status', authMiddleware, roleMiddleware(['ADMIN']), enrollmentController.updateEnrollmentStatus);

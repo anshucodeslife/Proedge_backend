@@ -6,7 +6,7 @@ const fs = require('fs');
 /**
  * Create student (Admin only)
  */
-async function createStudent({ studentId, email, password, fullName, isPreApproved = false }) {
+async function createStudent({ studentId, email, password, fullName, contact, isPreApproved = false }) {
   // Check if student ID already exists
   if (studentId) {
     const existing = await prisma.user.findUnique({
@@ -27,8 +27,9 @@ async function createStudent({ studentId, email, password, fullName, isPreApprov
     throw new Error('Email already exists');
   }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(password, 10);
+  // Hash password (default to contact number if password not provided, fallback to 'student123')
+  const defaultPassword = password || contact || 'student123';
+  const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
   // Create student
   const student = await prisma.user.create({
@@ -40,6 +41,7 @@ async function createStudent({ studentId, email, password, fullName, isPreApprov
       role: 'STUDENT',
       isPreApproved,
       studentIdVerified: !!studentId,
+      contact: contact || null,
     },
     select: {
       id: true,
@@ -266,8 +268,9 @@ async function bulkUploadStudents(filePath) {
             const created = await createStudent({
               studentId: student.studentId,
               email: student.email,
-              password: student.password || 'student123', // Default password
+              password: student.password,
               fullName: student.fullName,
+              contact: student.contact || student.phone || student.mobile, // Try common CSV headers
               isPreApproved: true,
             });
 
@@ -307,12 +310,12 @@ async function addPreApprovedStudent({ studentId, fullName, email, phone }) {
  */
 async function getAllStudents({ page = 1, limit = 20, search = '', status = '', courseId = '', batchId = '', sortBy = 'createdAt', sortOrder = 'desc' }) {
   const skip = (page - 1) * limit;
-  
+
   // Build where clause
   const where = {
     role: 'STUDENT',
   };
-  
+
   if (search) {
     where.OR = [
       { fullName: { contains: search, mode: 'insensitive' } },
@@ -320,26 +323,26 @@ async function getAllStudents({ page = 1, limit = 20, search = '', status = '', 
       { studentId: { contains: search, mode: 'insensitive' } },
     ];
   }
-  
+
   if (status) {
     where.status = status;
   }
-  
+
   if (courseId) {
     where.enrollments = {
       some: { courseId },
     };
   }
-  
+
   if (batchId) {
     where.enrollments = {
       some: { batchId },
     };
   }
-  
+
   // Get total count
   const total = await prisma.user.count({ where });
-  
+
   // Get students
   const students = await prisma.user.findMany({
     where,
@@ -364,7 +367,7 @@ async function getAllStudents({ page = 1, limit = 20, search = '', status = '', 
       },
     },
   });
-  
+
   return {
     students,
     pagination: {
@@ -433,16 +436,16 @@ async function getStudentById(id) {
       },
     },
   });
-  
+
   if (!student) {
     throw new Error('Student not found');
   }
-  
+
   // Remove password hash from response
   delete student.passwordHash;
   delete student.otpCode;
   delete student.otpExpiry;
-  
+
   return student;
 }
 
@@ -458,7 +461,7 @@ async function getStudentEnrollments(studentId) {
       payments: true,
     },
   });
-  
+
   return enrollments;
 }
 
@@ -474,7 +477,7 @@ async function getStudentProgress(studentId, courseId = null) {
       },
     };
   }
-  
+
   const watchLogs = await prisma.watchLog.findMany({
     where,
     include: {
@@ -490,7 +493,7 @@ async function getStudentProgress(studentId, courseId = null) {
       },
     },
   });
-  
+
   return watchLogs;
 }
 
@@ -505,15 +508,15 @@ async function removeEnrollment(studentId, enrollmentId) {
       userId: studentId,
     },
   });
-  
+
   if (!enrollment) {
     throw new Error('Enrollment not found');
   }
-  
+
   await prisma.enrollment.delete({
     where: { id: enrollmentId },
   });
-  
+
   return { message: 'Enrollment removed successfully' };
 }
 
@@ -531,7 +534,7 @@ async function updateStudentStatus(id, status) {
       status: true,
     },
   });
-  
+
   return student;
 }
 
@@ -540,12 +543,12 @@ async function updateStudentStatus(id, status) {
  */
 async function resetStudentPassword(id, newPassword) {
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  
+
   await prisma.user.update({
     where: { id },
     data: { passwordHash },
   });
-  
+
   return { message: 'Password reset successfully' };
 }
 
@@ -556,7 +559,7 @@ async function getAllPreApproved() {
   const preApproved = await prisma.preApprovedStudent.findMany({
     orderBy: { createdAt: 'desc' },
   });
-  
+
   return preApproved;
 }
 
@@ -567,7 +570,7 @@ async function deletePreApproved(id) {
   await prisma.preApprovedStudent.delete({
     where: { id },
   });
-  
+
   return { message: 'Pre-approved student deleted' };
 }
 
@@ -582,7 +585,7 @@ async function bulkUpdateStatus(studentIds, status) {
     },
     data: { status },
   });
-  
+
   return {
     message: `Updated ${result.count} students`,
     count: result.count,
@@ -597,7 +600,7 @@ async function bulkAssignToCourse(studentIds, courseId, batchId = null) {
     success: [],
     failed: [],
   };
-  
+
   for (const studentId of studentIds) {
     try {
       const enrollment = await assignToCourse(studentId, courseId, batchId);
@@ -606,7 +609,7 @@ async function bulkAssignToCourse(studentIds, courseId, batchId = null) {
       results.failed.push({ studentId, error: error.message });
     }
   }
-  
+
   return results;
 }
 

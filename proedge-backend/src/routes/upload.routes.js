@@ -34,7 +34,7 @@ const router = express.Router();
 router.post(
     '/signed-url',
     authMiddleware,
-    roleMiddleware(['ADMIN', 'TUTOR']),
+    roleMiddleware(['ADMIN', 'TUTOR', 'SUPER_ADMIN']),
     uploadController.getUploadUrl
 );
 

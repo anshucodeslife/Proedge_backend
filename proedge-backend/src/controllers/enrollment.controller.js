@@ -11,6 +11,16 @@ const enrollStudent = async (req, res, next) => {
   }
 };
 
+const initiateEnrollment = async (req, res, next) => {
+  try {
+    console.log("In initiateEnrollment Controller", req.body);
+    const result = await enrollmentService.initiateEnrollment(req.body);
+    success(res, result, 'Order created successfully', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getEnrollments = async (req, res, next) => {
   try {
     const { userId, page, limit } = req.query;
@@ -74,6 +84,7 @@ const getWatchLogs = async (req, res, next) => {
 
 module.exports = {
   enrollStudent,
+  initiateEnrollment,
   getEnrollments,
   updateEnrollmentStatus,
   markAttendance,
