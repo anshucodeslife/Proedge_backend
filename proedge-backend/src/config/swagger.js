@@ -18,7 +18,7 @@ const options = {
         description: 'Development server',
       },
       {
-        url: 'https://api.proedge.com',
+        url: 'https://backend.proedgelearning.in',
         description: 'Production server',
       },
     ],
