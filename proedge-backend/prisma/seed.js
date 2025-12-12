@@ -20,13 +20,19 @@ async function seed() {
   await prisma.course.deleteMany({});
   await prisma.coupon.deleteMany({});
   await prisma.preApprovedStudent.deleteMany({});
-  // Delete all users except Admin
+  // Delete all users except Admin and SuperAdmin
   await prisma.user.deleteMany({
-    where: { NOT: { email: 'admin@proedge.com' } }
+    where: {
+      NOT: {
+        email: {
+          in: ['admin@proedge.com', 'superadmin@proedge.com']
+        }
+      }
+    }
   });
   console.log('✓ Cleaned up previous data');
 
-  // 2. Create/Update Admin User
+  // 2. Create/Update Admin Users
   const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@proedge.com' },
@@ -40,6 +46,20 @@ async function seed() {
     },
   });
   console.log('✓ Admin ready:', admin.email);
+
+  const superAdminPassword = await bcrypt.hash('anshu123', 10);
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'superadmin@proedge.com' },
+    update: {},
+    create: {
+      email: 'superadmin@proedge.com',
+      passwordHash: superAdminPassword,
+      fullName: 'Super Admin',
+      role: 'SUPERADMIN',
+      status: 'ACTIVE',
+    },
+  });
+  console.log('✓ Super Admin ready:', superAdmin.email);
 
   // 3. Create 10 Pre-approved Students
   const preApprovedStudents = [];
@@ -305,6 +325,7 @@ async function seed() {
   console.log('\n✅ Seed completed successfully!');
   console.log('\nDemo Credentials:');
   console.log('Admin: admin@proedge.com / admin123');
+  console.log('Super Admin: superadmin@proedge.com / anshu123');
   console.log('Tutor: tutor@proedge.com / tutor123');
   console.log('Students: student1@proedge.com to student10@proedge.com / student123');
 }
