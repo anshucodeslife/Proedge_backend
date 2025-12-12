@@ -73,6 +73,19 @@ const handleWebhook = async (event, data) => {
           data: { status: 'ACTIVE' },
         });
       }
+
+      // Create Invoice
+      const invoiceNo = `INV-${Date.now()}`;
+      await prisma.invoice.create({
+        data: {
+          paymentId: payment.id,
+          invoiceNo: invoiceNo,
+          amount: payment.amount,
+          total: payment.amount,
+          tax: 0, // Logic for tax can be added here
+          pdfUrl: null // Generate PDF later if needed
+        }
+      });
     }
   }
 

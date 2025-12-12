@@ -5,11 +5,12 @@ const admissionController = require('../controllers/admission.controller');
 // New Admission (Form Submit)
 router.post('/', admissionController.saveBatch1Admission); // Public
 
-// Admin Management
-router.get('/', admissionController.getBatch1Admissions);
-router.get('/:id', admissionController.getBatch1AdmissionById);
-router.put('/:id', admissionController.updateBatch1Admission);
-router.delete('/:id', admissionController.deleteBatch1Admission);
+// Basic Admission CRUD (Mapped to Enrollment)
+router.get('/', admissionController.getBatch1Admissions); // List
+router.get('/:id', admissionController.getBatch1AdmissionById); // View
+router.put('/:id', admissionController.updateBatch1Admission); // Edit
+router.delete('/:id', admissionController.deleteBatch1Admission); // Delete
+router.put('/:id/restore', admissionController.restoreBatch1Admission); // Restore
 
 // Enrollment Actions (Move to Logic)
 router.post('/:id/enroll', admissionController.enrollStudentFromAdmission); // Enroll Admission

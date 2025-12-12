@@ -35,7 +35,7 @@ const updateEnrollmentStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const result = await enrollmentService.updateEnrollmentStatus(id, status);
+    const result = await enrollmentService.updateEnrollmentStatus(Number(id), status);
     success(res, result, 'Enrollment status updated successfully');
   } catch (err) {
     next(err);

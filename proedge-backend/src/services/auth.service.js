@@ -37,7 +37,11 @@ const signup = async (data) => {
   });
 
   const token = generateToken(user);
-  return { user, token };
+
+  // Remove passwordHash from response
+  const { passwordHash: _, ...userWithoutPassword } = user;
+
+  return { user: userWithoutPassword, token };
 };
 
 const login = async (email, password) => {
@@ -56,7 +60,11 @@ const login = async (email, password) => {
   }
 
   const token = generateToken(user);
-  return { user, token };
+
+  // Remove passwordHash from response
+  const { passwordHash: _, ...userWithoutPassword } = user;
+
+  return { user: userWithoutPassword, token };
 };
 
 const forgotPassword = async (email) => {

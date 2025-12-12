@@ -21,6 +21,7 @@ router.delete('/lessons/:id', authMiddleware, roleMiddleware(['ADMIN']), lmsCont
 // Batch routes
 router.post('/batches', authMiddleware, roleMiddleware(['ADMIN']), lmsController.createBatch);
 router.get('/batches', lmsController.getBatches);
+router.get('/batches/:id/students', lmsController.getBatchStudents);
 router.put('/batches/:id', authMiddleware, roleMiddleware(['ADMIN']), lmsController.updateBatch);
 router.delete('/batches/:id', authMiddleware, roleMiddleware(['ADMIN']), lmsController.deleteBatch);
 

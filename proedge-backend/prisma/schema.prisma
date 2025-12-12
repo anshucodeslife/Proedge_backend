@@ -103,11 +103,11 @@ model Course {
   projects         String?
   certificate      String?
   access           String?
+  points           Json?             // Learning outcomes/points
   modules          Module[]
   batches          Batch[]
   enrollments      Enrollment[]
   students         User[]
-  batch1admissions Batch1admission[]
   enquiries        Enquiry[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -330,67 +330,10 @@ model Referral {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  batch1admissions Batch1admission[]
+
 }
 
-model Batch1admission {
-  id       Int     @id @default(autoincrement())
-  fullName String  @map("full_name")
-  email    String  @unique
-  contact  String?
-  dob      String?
-  gender   String?
-  address  String?
 
-  parentName     String? @map("parent_name")
-  parentContact  String? @map("parent_contact")
-  currentSchool  String? @map("current_school")
-  classYear      String? @map("class_year")
-  subjects       String?
-  educationLevel String? @map("education_level")
-  school         String?
-  board          String?
-
-  courseId    Int?    @map("course_id")
-  course      Course? @relation(fields: [courseId], references: [id])
-  courseName  String? @map("course_name")
-  batchTiming String? @map("batch_timing")
-  duration    String?
-
-  // Fees
-  totalFees     Decimal? @map("total_fees")
-  originalFees  Decimal? @map("original_fees")
-  paymentMode   String?  @map("payment_mode")
-  paymentOption String?  @map("payment_option")
-
-  referralId     Int?      @map("referral_id")
-  referral       Referral? @relation(fields: [referralId], references: [id])
-  referralCode   String?   @map("referral_code")
-  referralAmount Decimal?  @map("referral_amount")
-
-  studentSignature String? @map("student_signature")
-  parentSignature  String? @map("parent_signature")
-  submissionDate   String? @map("submission_date")
-
-  emergencyName     String? @map("emergency_name")
-  emergencyRelation String? @map("emergency_relation")
-  emergencyPhone    String? @map("emergency_phone")
-
-  installment1Amount Decimal? @map("installment1_amount")
-  installment1Date   String?  @map("installment1_date")
-  installment2Amount Decimal? @map("installment2_amount")
-  installment2Date   String?  @map("installment2_date")
-  installment3Amount Decimal? @map("installment3_amount")
-  installment3Date   String?  @map("installment3_date")
-
-  referenceNo String? @map("reference_no")
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  @@map("Batch1admission")
-}
 
 model Enquiry {
   id                Int     @id @default(autoincrement())
@@ -443,6 +386,7 @@ enum Role {
   ADMIN
   STUDENT
   TUTOR
+  SUPERADMIN
 }
 
 enum Status {

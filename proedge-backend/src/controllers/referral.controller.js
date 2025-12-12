@@ -4,21 +4,26 @@ const getReferrals = async (req, res) => {
     try {
         const referrals = await prisma.referral.findMany({
             where: { deletedAt: null },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                _count: {
-                    select: { batch1admissions: true } // Changed from students to batch1admissions as per Relation Name
-                },
-                batch1admissions: {
-                    select: { referralAmount: true }
-                }
-            }
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Aggregate usage from User table
+        const usageStats = await prisma.user.groupBy({
+            by: ['referralCode'],
+            where: {
+                referralCode: { in: referrals.map(r => r.code) }
+            },
+            _count: { referralCode: true },
+            _sum: { referralAmount: true }
         });
 
         const data = referrals.map(ref => {
-            const totalDiscount = ref.batch1admissions.reduce((sum, s) => sum + (Number(s.referralAmount) || 0), 0);
-            const { batch1admissions, ...rest } = ref;
-            return { ...rest, totalDiscount };
+            const stat = usageStats.find(s => s.referralCode === ref.code);
+            return {
+                ...ref,
+                _count: { batch1admissions: stat?._count?.referralCode || 0 }, // Maintain structure for frontend if needed, or update frontend
+                totalDiscount: stat?._sum?.referralAmount || 0
+            };
         });
 
         res.json({ success: true, data });
@@ -129,21 +134,24 @@ const getReferralStats = async (req, res) => {
             where.code = code.toUpperCase();
         }
 
-        const referrals = await prisma.referral.findMany({
-            where,
-            include: {
-                batch1admissions: true
-            }
+        const referrals = await prisma.referral.findMany({ where });
+
+        const usageStats = await prisma.user.groupBy({
+            by: ['referralCode'],
+            where: {
+                referralCode: { in: referrals.map(r => r.code) }
+                // status: 'ACTIVE'
+            },
+            _count: { referralCode: true },
+            _sum: { referralAmount: true }
         });
 
         const data = referrals.map(ref => {
-            const usages = ref.batch1admissions.length;
-            const totalAmount = ref.batch1admissions.reduce((sum, s) => sum + (Number(s.referralAmount) || 0), 0);
-
+            const stat = usageStats.find(s => s.referralCode === ref.code);
             return {
                 referral_code: ref.code,
-                usages,
-                total_amount: totalAmount
+                usages: stat?._count?.referralCode || 0,
+                total_amount: stat?._sum?.referralAmount || 0
             };
         });
 
@@ -154,7 +162,7 @@ const getReferralStats = async (req, res) => {
     }
 };
 
-// Public endpoint for fetching students by referral (Batch1Admission)
+// Public endpoint for fetching students by referral
 const getStudentsByReferral = async (req, res) => {
     try {
         const { code } = req.query;
@@ -170,8 +178,12 @@ const getStudentsByReferral = async (req, res) => {
             return res.json({ success: true, data: [] });
         }
 
-        const students = await prisma.batch1admission.findMany({
-            where: { referralId: referral.id },
+        // Query users table for students who used this code
+        const students = await prisma.user.findMany({
+            where: {
+                referralCode: code.toUpperCase(),
+                role: 'STUDENT'
+            },
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
@@ -180,7 +192,7 @@ const getStudentsByReferral = async (req, res) => {
                 contact: true,
                 courseName: true,
                 totalFees: true,
-                originalFees: true, // fallback
+                originalFees: true,
                 createdAt: true
             }
         });

@@ -111,6 +111,16 @@ const getBatches = async (req, res, next) => {
   }
 };
 
+const getBatchStudents = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await lmsService.getBatchStudents(id);
+    success(res, result, 'Batch students fetched successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const updateBatch = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -143,6 +153,7 @@ module.exports = {
   deleteLesson,
   createBatch,
   getBatches,
+  getBatchStudents,
   updateBatch,
   deleteBatch,
 };

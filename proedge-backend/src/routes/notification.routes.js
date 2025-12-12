@@ -45,7 +45,8 @@ router.post(
   '/send',
   roleMiddleware(['ADMIN']),
   [
-    body('userId').notEmpty().withMessage('User ID is required'),
+    body('userId').optional(),
+    body('userIds').optional().isArray().withMessage('User IDs must be an array'),
     body('type').isIn(['EMAIL', 'PUSH', 'IN_APP']).withMessage('Invalid notification type'),
     body('title').notEmpty().withMessage('Title is required'),
     body('message').notEmpty().withMessage('Message is required'),

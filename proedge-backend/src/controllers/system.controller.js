@@ -137,8 +137,37 @@ const getTrafficStats = async (req, res) => {
 const resetData = async (req, res) => {
     try {
         console.log('⚠️ RESET DATA REQUESTED BY ADMIN');
-        await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Batch1admission", "Enquiry", "visit_logs", "AuditLog" RESTART IDENTITY CASCADE;`);
-        res.json({ success: true, message: 'Test data reset successfully.' });
+
+        // Execute in transaction to ensure integrity
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete dependent transactional data first
+            await tx.invoice.deleteMany({});
+            await tx.payment.deleteMany({});
+            await tx.enrollmentHistory.deleteMany({});
+            await tx.enrollment.deleteMany({});
+            await tx.attendance.deleteMany({});
+            await tx.watchLog.deleteMany({});
+            await tx.notification.deleteMany({});
+
+            // 2. Delete all Enquiries and Logs
+            await tx.enquiry.deleteMany({});
+            // visit_logs is mapped to 'visit_logs' table in prisma but model is VisitLog
+            await tx.visitLog.deleteMany({});
+            await tx.auditLog.deleteMany({});
+
+            // 3. Delete Users EXCEPT Admins/SuperAdmins
+            const result = await tx.user.deleteMany({
+                where: {
+                    role: {
+                        notIn: ['ADMIN', 'SUPERADMIN']
+                    }
+                }
+            });
+
+            console.log(`Deleted ${result.count} students/users.`);
+        });
+
+        res.json({ success: true, message: 'System reset complete. All students and transactional data cleared.' });
     } catch (error) {
         console.error('Reset Data Error:', error);
         res.status(500).json({ success: false, error: 'Failed to reset data', details: error.message });

@@ -75,10 +75,34 @@ const getBatches = async (page = 1, limit = 10) => {
   const batches = await prisma.batch.findMany({
     skip: parseInt(skip),
     take: parseInt(limit),
-    include: { course: true },
+    include: {
+      course: true,
+      _count: { select: { enrollments: { where: { status: 'ACTIVE' } } } }
+    },
   });
   const total = await prisma.batch.count();
   return { batches, total, page, limit };
+};
+
+const getBatchStudents = async (batchId) => {
+  return await prisma.enrollment.findMany({
+    where: {
+      batchId: Number(batchId),
+      status: 'ACTIVE'
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          studentId: true,
+          contact: true,
+          status: true
+        }
+      }
+    }
+  });
 };
 
 const updateBatch = async (id, data) => {
@@ -92,30 +116,6 @@ const updateBatch = async (id, data) => {
  * Delete module
  */
 async function deleteModule(id) {
-  // Check if module has lessons with student progress (watch logs)
-  const lessonsWithProgress = await prisma.lesson.findMany({
-    where: {
-      moduleId: id,
-      watchLogs: {
-        some: {}
-      }
-    },
-    include: {
-      _count: {
-        select: { watchLogs: true }
-      }
-    }
-  });
-
-  // If there are lessons with student watch logs, prevent deletion
-  if (lessonsWithProgress.length > 0) {
-    const totalWatchLogs = lessonsWithProgress.reduce((sum, lesson) => sum + lesson._count.watchLogs, 0);
-    throw new Error(
-      `Cannot delete this module because it contains ${lessonsWithProgress.length} lesson(s) with ${totalWatchLogs} student progress record(s). ` +
-      `Students have already started watching these lessons. Please archive the module instead of deleting it.`
-    );
-  }
-
   // Delete all dependencies in a transaction
   await prisma.$transaction(async (tx) => {
     // Get all lesson IDs in this module
@@ -131,7 +131,7 @@ async function deleteModule(id) {
         where: { lessonId: { in: lessonIds } }
       });
 
-      // Delete any remaining watch logs (shouldn't be any due to check above)
+      // Delete any watch logs
       await tx.watchLog.deleteMany({
         where: { lessonId: { in: lessonIds } }
       });
@@ -155,8 +155,21 @@ async function deleteModule(id) {
  * Delete lesson
  */
 async function deleteLesson(id) {
-  await prisma.lesson.delete({
-    where: { id },
+  await prisma.$transaction(async (tx) => {
+    // Delete batch video mappings
+    await tx.batchVideoMap.deleteMany({
+      where: { lessonId: id }
+    });
+
+    // Delete watch logs
+    await tx.watchLog.deleteMany({
+      where: { lessonId: id }
+    });
+
+    // Delete the lesson
+    await tx.lesson.delete({
+      where: { id },
+    });
   });
 
   return { message: 'Lesson deleted successfully' };
@@ -183,6 +196,7 @@ module.exports = {
   updateLesson,
   createBatch,
   getBatches,
+  getBatchStudents,
   updateBatch,
   deleteModule,
   deleteLesson,

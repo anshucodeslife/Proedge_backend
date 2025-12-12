@@ -88,11 +88,58 @@ async function getAllStudents(page = 1, limit = 10, search = '') {
         role: true,
         status: true,
         createdAt: true,
+
+        // Extended Profile
+        contact: true,
+        address: true,
+        dob: true,
+        gender: true,
+        parentName: true,
+        parentContact: true,
+
+        // Course/Fee Info
+        courseName: true,
+        batchTiming: true,
+        totalFees: true,
+        paidFees: true,
+        originalFees: true,
+        paymentMode: true,
+        paymentOption: true,
+        referenceNo: true,
+
+        // Installment Info
+        installment1Amount: true,
+        installment1Date: true,
+        installment1Paid: true,
+        installment2Amount: true,
+        installment2Date: true,
+        installment2Paid: true,
+        installment3Amount: true,
+        installment3Date: true,
+        installment3Paid: true,
+
         enrollments: {
           select: {
             id: true,
-            course: { select: { title: true } },
+            status: true,
+            course: { select: { title: true, price: true } },
             batch: { select: { name: true } },
+            payments: {
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+                orderId: true,
+                invoice: {
+                  select: {
+                    id: true,
+                    invoiceNo: true,
+                    pdfUrl: true,
+                    amount: true
+                  }
+                }
+              }
+            }
           },
         },
       },
@@ -115,7 +162,7 @@ async function getAllStudents(page = 1, limit = 10, search = '') {
  * Update student
  */
 async function updateStudent(id, data) {
-  const { fullName, email, studentId, status } = data;
+  const { fullName, email, studentId, status, contact, dob, gender, address, parentName, parentContact, currentSchool, classYear, educationLevel, board } = data;
 
   const student = await prisma.user.update({
     where: { id },
@@ -124,6 +171,16 @@ async function updateStudent(id, data) {
       ...(email && { email }),
       ...(studentId && { studentId }),
       ...(status && { status }),
+      ...(contact && { contact }),
+      ...(dob && { dob }),
+      ...(gender && { gender }),
+      ...(address && { address }),
+      ...(parentName && { parentName }),
+      ...(parentContact && { parentContact }),
+      ...(currentSchool && { currentSchool }),
+      ...(classYear && { classYear }),
+      ...(educationLevel && { educationLevel }),
+      ...(board && { board }),
     },
     select: {
       id: true,
@@ -360,9 +417,64 @@ async function getAllStudents({ page = 1, limit = 20, search = '', status = '', 
       isPreApproved: true,
       createdAt: true,
       updatedAt: true,
+
+      // Extended Profile
+      contact: true,
+      address: true,
+      dob: true,
+      gender: true,
+      parentName: true,
+      parentContact: true,
+
+      // Course/Fee Info
+      courseName: true,
+      batchTiming: true,
+      totalFees: true,
+      paidFees: true,
+      originalFees: true,
+      paymentMode: true,
+      paymentOption: true,
+      referenceNo: true,
+
+      // Installment Info
+      installment1Amount: true,
+      installment1Date: true,
+      installment1Paid: true,
+      installment2Amount: true,
+      installment2Date: true,
+      installment2Paid: true,
+      installment3Amount: true,
+      installment3Date: true,
+      installment3Paid: true,
+
       _count: {
         select: {
           enrollments: true,
+        },
+      },
+
+      enrollments: {
+        select: {
+          id: true,
+          status: true,
+          course: { select: { title: true, price: true } },
+          batch: { select: { name: true } },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              status: true,
+              orderId: true,
+              invoice: {
+                select: {
+                  id: true,
+                  invoiceNo: true,
+                  pdfUrl: true,
+                  amount: true
+                }
+              }
+            }
+          }
         },
       },
     },

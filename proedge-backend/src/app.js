@@ -22,6 +22,7 @@ const paymentRoutes = require('./routes/payment.routes');
 const adminRoutes = require('./routes/admin.routes');
 const adminStudentsRoutes = require('./routes/admin.students.routes');
 const adminCoursesRoutes = require('./routes/admin.courses.routes');
+const adminTutorRoutes = require('./routes/admin.tutor.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const attendanceRoutes = require('./routes/attendance.routes');
@@ -52,6 +53,11 @@ app.use((req, res, next) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs)); // Alternative route
 
+// Root route for verification
+app.get('/', (req, res) => {
+    res.json({ success: true, message: "backend.proedgelearning.in server running success" });
+});
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/auth', authEnhancedRoutes);
@@ -65,6 +71,7 @@ app.use('/payments', paymentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/students', adminStudentsRoutes);
 app.use('/admin/courses', adminCoursesRoutes);
+app.use('/admin/tutors', adminTutorRoutes);
 app.use('/student', studentRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/admin/attendance', attendanceRoutes);
