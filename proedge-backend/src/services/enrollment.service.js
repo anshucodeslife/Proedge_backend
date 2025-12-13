@@ -85,7 +85,7 @@ const initiateEnrollment = async (data) => {
     originalFees: enrollmentDetails.originalFees || null,
     paymentMode: enrollmentDetails.paymentMode || 'UPI', // CRITICAL: Default to UPI if not specified
     paymentOption: enrollmentDetails.paymentOption,
-    courseName: course.title, // Add course name to user profile
+    // courseName will be set later after course is fetched
 
     // Referral
     referralCode: enrollmentDetails.referralCode || null,
@@ -153,6 +153,12 @@ const initiateEnrollment = async (data) => {
   // 3. Get Course Price
   const course = await prisma.course.findUnique({ where: { id: Number(courseId) } });
   if (!course) throw { statusCode: 404, message: 'Course not found' };
+
+  // Update user with course name now that it's available
+  user = await prisma.user.update({
+    where: { id: user.id },
+    data: { courseName: course.title }
+  });
 
   // 4. Create Pending Enrollment
   const enrollment = await prisma.enrollment.create({
