@@ -291,14 +291,22 @@ const initiateEnrollment = async (data) => {
 
 const getEnrollments = async (userId, page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
-  const where = userId ? { userId } : {};
+  const where = userId ? { userId: Number(userId) } : {}; // Ensure userId is Number
 
   const enrollments = await prisma.enrollment.findMany({
     where,
     skip: parseInt(skip),
     take: parseInt(limit),
     include: {
-      course: true,
+      course: {
+        include: {
+          modules: {
+            include: {
+              lessons: { select: { id: true } }
+            }
+          }
+        }
+      },
       batch: true,
       user: {
         select: {
@@ -343,7 +351,8 @@ const getEnrollments = async (userId, page = 1, limit = 10) => {
           installment2Amount: true,
           installment2Date: true,
           installment3Amount: true,
-          installment3Date: true
+          installment3Date: true,
+          studentId: true
         }
       },
       payments: {
@@ -354,8 +363,57 @@ const getEnrollments = async (userId, page = 1, limit = 10) => {
     },
   });
 
+  // Calculate Progress and Sanitize Response
+  const enrichedEnrollments = await Promise.all(enrollments.map(async (enrollment) => {
+    const course = enrollment.course;
+
+    // 1. Calculate Total Lessons
+    let totalLessons = 0;
+    const lessonIds = [];
+    if (course && course.modules) {
+      course.modules.forEach(m => {
+        if (m.lessons) {
+          totalLessons += m.lessons.length;
+          m.lessons.forEach(l => lessonIds.push(l.id));
+        }
+      });
+    }
+
+    // 2. Calculate Completed Lessons (from WatchLog)
+    let completedLessons = 0;
+    if (totalLessons > 0 && enrollment.userId) {
+      const completedLogs = await prisma.watchLog.count({
+        where: {
+          userId: enrollment.userId,
+          lessonId: { in: lessonIds },
+          completed: true
+        }
+      });
+      completedLessons = completedLogs;
+    }
+
+    // 3. Calculate Percentage
+    let progress = 0;
+    if (totalLessons > 0) {
+      progress = (completedLessons / totalLessons) * 100;
+    }
+
+    // Attach to Course Object for Frontend
+    // Frontend expects: progress (double), totalLessons (int), completedLessons (int)
+    if (enrollment.course) {
+      enrollment.course.progress = parseFloat(progress.toFixed(2));
+      enrollment.course.totalLessons = totalLessons;
+      enrollment.course.completedLessons = completedLessons;
+
+      // Remove heavy modules data to keep response light
+      delete enrollment.course.modules;
+    }
+
+    return enrollment;
+  }));
+
   const total = await prisma.enrollment.count({ where });
-  return { enrollments, total, page, limit };
+  return { enrollments: enrichedEnrollments, total, page, limit };
 };
 
 const updateEnrollmentStatus = async (id, status) => {

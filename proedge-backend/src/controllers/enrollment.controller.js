@@ -23,7 +23,13 @@ const initiateEnrollment = async (req, res, next) => {
 
 const getEnrollments = async (req, res, next) => {
   try {
-    const { userId, page, limit } = req.query;
+    let { userId, page, limit } = req.query;
+
+    // Security: If user is not ADMIN, restrict to their own enrollments
+    if (req.user.role !== 'ADMIN') {
+      userId = req.user.id;
+    }
+
     const result = await enrollmentService.getEnrollments(userId, page, limit);
     success(res, result, 'Enrollments fetched successfully');
   } catch (err) {
