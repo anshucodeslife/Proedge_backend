@@ -28,6 +28,22 @@ const handleWebhook = async (req, res, next) => {
   }
 };
 
+const verifyPayment = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const result = await paymentService.verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    success(res, result, 'Payment verified successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getAllPayments = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -48,5 +64,6 @@ const getAllPayments = async (req, res, next) => {
 module.exports = {
   createOrder,
   handleWebhook,
+  verifyPayment,
   getAllPayments,
 };

@@ -8,6 +8,7 @@ const router = express.Router();
 router.get('/', authMiddleware, paymentController.getAllPayments);
 
 router.post('/order', authMiddleware, paymentController.createOrder);
+router.post('/verify', paymentController.verifyPayment);
 router.post('/webhook', paymentController.handleWebhook);
 
 module.exports = router;

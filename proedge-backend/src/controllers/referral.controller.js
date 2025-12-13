@@ -21,7 +21,7 @@ const getReferrals = async (req, res) => {
             const stat = usageStats.find(s => s.referralCode === ref.code);
             return {
                 ...ref,
-                _count: { batch1admissions: stat?._count?.referralCode || 0 }, // Maintain structure for frontend if needed, or update frontend
+                _count: { usages: stat?._count?.referralCode || 0 }, // Maintain structure for frontend if needed, or update frontend
                 totalDiscount: stat?._sum?.referralAmount || 0
             };
         });

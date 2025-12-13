@@ -92,6 +92,81 @@ const handleWebhook = async (event, data) => {
   return { success: true };
 };
 
+const verifyPayment = async ({ orderId, paymentId, signature }) => {
+  // Verify Razorpay signature
+  const expectedSignature = crypto
+    .createHmac('sha256', config.razorpay.keySecret)
+    .update(`${orderId}|${paymentId}`)
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    throw { statusCode: 401, message: 'Invalid payment signature' };
+  }
+
+  // Find payment by orderId
+  const payment = await prisma.payment.findFirst({
+    where: { orderId },
+    include: {
+      enrollment: {
+        include: {
+          user: true,
+          course: true
+        }
+      }
+    }
+  });
+
+  if (!payment) {
+    throw { statusCode: 404, message: 'Payment not found' };
+  }
+
+  // Update payment status
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
+      status: 'SUCCESS',
+      paymentId,
+      providerPaymentId: paymentId,
+      razorpaySignature: signature
+    }
+  });
+
+  // Activate enrollment if linked
+  if (payment.enrollmentId) {
+    await prisma.enrollment.update({
+      where: { id: payment.enrollmentId },
+      data: { status: 'ACTIVE' }
+    });
+
+    // Activate user
+    await prisma.user.update({
+      where: { id: payment.enrollment.userId },
+      data: { status: 'ACTIVE' }
+    });
+  }
+
+  // Create Invoice
+  const invoiceNo = `INV-${Date.now()}`;
+  const invoice = await prisma.invoice.create({
+    data: {
+      paymentId: payment.id,
+      invoiceNo,
+      amount: payment.amount,
+      total: payment.amount,
+      tax: 0
+    }
+  });
+
+  return {
+    invoiceNo,
+    invoiceId: invoice.id,
+    amount: payment.amount,
+    studentName: payment.enrollment?.user?.fullName,
+    studentEmail: payment.enrollment?.user?.email,
+    courseName: payment.enrollment?.course?.title
+  };
+};
+
 const getAllPayments = async (page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
   const [payments, total] = await Promise.all([
@@ -130,5 +205,6 @@ module.exports = {
   createOrder,
   verifyWebhook,
   handleWebhook,
+  verifyPayment,
   getAllPayments,
 };
