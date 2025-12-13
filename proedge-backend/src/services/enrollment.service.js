@@ -184,14 +184,12 @@ const initiateEnrollment = async (data) => {
     amountToCharge = Number(course.price);
   }
 
-  // Payment Mode Logic:
-  // 1. Check if Online Payment (Razorpay) - HIGHEST PRIORITY
-  // 2. Check if Offline/Manual Payment
-  // 3. Handle Free Courses
+  // Payment Mode Routing
+  // UPI → Razorpay
+  // Cash/Bank Transfer → Manual/Offline (no Razorpay)
 
-  // Check payment mode FIRST to route correctly
-  if (profileData.paymentMode === 'Online' || profileData.paymentMode === 'UPI') {
-    // Online Payment Flow - Create Razorpay Order
+  if (profileData.paymentMode === 'UPI') {
+    // UPI/Online Payment Flow - Create Razorpay Order
     const { order } = await paymentService.createOrder({
       amount: amountToCharge,
       currency: 'INR',
@@ -203,7 +201,7 @@ const initiateEnrollment = async (data) => {
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      key: process.env.RAZORPAY_KEY_ID,
+      key: config.razorpay.keyId,
       enrollmentId: enrollment.id,
       user: {
         name: user.fullName,
@@ -211,24 +209,31 @@ const initiateEnrollment = async (data) => {
         contact: user.contact
       }
     };
-  }
+  } else if (profileData.paymentMode === 'Cash' || profileData.paymentMode === 'Bank Transfer') {
+    // Cash or Bank Transfer - Create manual payment record
+    // Generate invoice number
+    const lastInvoice = await prisma.invoice.findFirst({
+      orderBy: { id: 'desc' }
+    });
 
-  // Check if this is an Offline / Manual Admission
-  const isOffline = profileData.paymentMode && ['Cash', 'Bank Transfer', 'Cheque'].includes(profileData.paymentMode);
+    let invoiceNumber = 1001;
+    if (lastInvoice && lastInvoice.invoiceNo) {
+      const lastNumber = parseInt(lastInvoice.invoiceNo.replace('INV', ''));
+      if (!isNaN(lastNumber)) {
+        invoiceNumber = lastNumber + 1;
+      }
+    }
 
-  if (isOffline || (profileData.paymentMode && profileData.paymentMode !== 'Online' && profileData.paymentMode !== 'UPI')) {
-    // Default to Offline/Manual Invoice Generation
-    const invoiceNo = `INV-${Date.now()}`;
+    const invoiceNo = `INV${invoiceNumber}`;
 
-    // Create 'MANUAL' payment entry
     const payment = await prisma.payment.create({
       data: {
-        provider: 'MANUAL',
-        orderId: `ORD-${Date.now()}`,
-        providerPaymentId: `MAN-${Date.now()}`,
+        provider: 'manual',
+        orderId: `order_${Date.now()}`,
+        providerPaymentId: profileData.referenceNo || null,
         amount: amountToCharge,
         currency: 'INR',
-        status: 'SUCCESS', // Treated as recorded
+        status: 'INITIATED',
         enrollmentId: enrollment.id
       }
     });
