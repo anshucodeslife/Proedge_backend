@@ -81,6 +81,7 @@ const initiateEnrollment = async (data) => {
     // Fees & Payment (From EnrollModal)
     totalFees: enrollmentDetails.totalFees || 0,
     originalFees: enrollmentDetails.originalFees || null,
+    paymentMode: enrollmentDetails.paymentMode || 'Online', // CRITICAL: Default to Online if not specified
     paymentOption: enrollmentDetails.paymentOption,
 
     // Referral
@@ -165,102 +166,14 @@ const initiateEnrollment = async (data) => {
     amountToCharge = Number(course.price);
   }
 
-  // Check if this is an Offline / Manual Admission (e.g. from /admission page where no online payment is taken)
-  // If paymentOption is 'Payment in Advance' (Offline) or just treating it as manual entry.
-  // The user said "we are not doing online payment", so we should generate invoice immediately for these cases.
-  // We can assume if no specific amountToCharge passed for online gateway, or if explicitly handled as manual.
-  // However, traditionally initiateEnrollment tries to return an order. 
-  // If we want to bypass Razorpay, we can check a flag or implied state.
+  // Payment Mode Logic:
+  // 1. Check if Online Payment (Razorpay) - HIGHEST PRIORITY
+  // 2. Check if Offline/Manual Payment
+  // 3. Handle Free Courses
 
-  // For now, let's assume if the request DOES NOT explicitly ask for online payment (e.g. via a flag) 
-  // OR if we want to force invoice generation for all "initiate" calls that don't go to payment gateway immediately.
-  // But wait, initiateEnrollment is built to return a Razorpay order. 
-  // If we are on /admission, we might be submitting the form and NOT expecting a redirect to Razorpay?
-  // Let's look at how the frontend calls this. 
-  // If the user expects an invoice, they probably want the enrollment to be ACTIVE or at least have a record.
-
-  // Proposed Fix:
-  // If we want to support "Offline" admission via this same API:
-  // We create a "dummy" Payment record (provider='MANUAL') and Invoice immediately.
-  // We can check if 'paymentMode' in profileData is NOT 'Online'/'UPI', or if a flag `isOffline` is passed.
-
-  // Let's deduce from paymentOption or headers. 
-  // Actually, simpler: The user implies /admission creates a student/enrollment but doesn't pay online.
-  // So we should treat it as an "Offline" transaction if we don't return an order.
-
-  // But strictly, let's look at the existing code: it ALWAYS creates a Razorpay order unless free.
-  // We need to change this. 
-  // Let's check `firstName` or `source`? No.
-
-  // Let's check `paymentMode`.
-  const isOffline = profileData.paymentMode && ['Cash', 'Bank Transfer', 'Cheque'].includes(profileData.paymentMode);
-  // Or if the user just wants it for ALL enrollments from that page.
-
-  // Note: The user said "on /admission we are not doing online payment". 
-  // This likely means they are submitting the form and expecting it to just "save" the admission.
-  // If so, we should detect that and skip Razorpay.
-
-  if (isOffline || amountToCharge > 0) {
-    // Wait, if it IS offline, we skip Razorpay.
-    // But currently the code forces Razorpay order.
-    // To satisfy the user request "generate it auto and save", we must create the Invoice.
-
-    // Let's create a Payment record of type 'MANUAL' / 'OFFLINE'.
-    const invoiceNo = `INV-${Date.now()}`;
-
-    const payment = await prisma.payment.create({
-      data: {
-        provider: 'MANUAL',
-        orderId: `ORD-${Date.now()}`, // Dummy order ID
-        providerPaymentId: `MAN-${Date.now()}`,
-        amount: amountToCharge,
-        currency: 'INR',
-        status: 'SUCCESS', // Assume successful booking for Invoice generation
-        enrollmentId: enrollment.id
-      }
-    });
-
-    await prisma.invoice.create({
-      data: {
-        paymentId: payment.id,
-        invoiceNo: invoiceNo,
-        amount: amountToCharge,
-        total: amountToCharge,
-        tax: 0,
-        pdfUrl: null
-      }
-    });
-
-    // If it looks like a direct admission, activate it?
-    // The user just mentioned "save it".
-    // Let's also update enrollment status to ACTIVE if it's considered "Done".
-    // But maybe they want it PENDING. 
-    // Safe bet: kept PENDING or ACTIVE based on "isPreApproved". 
-    // Since user said "invoice generated", usually implies a confirmed transaction.
-    // Let's set it to ACTIVE to be safe/useful.
-
-    await prisma.enrollment.update({ where: { id: enrollment.id }, data: { status: 'ACTIVE' } });
-
-    return {
-      success: true,
-      message: 'Admission recorded with Invoice',
-      enrollmentId: enrollment.id,
-      invoiceNo,
-      user: { name: user.fullName, email: user.email }
-    };
-  }
-
-  // Original Razorpay logic (fallback if somehow it hits here, though we covered "amountToCharge > 0" above. 
-  // Wait, my logic above captures ALL payments. This essentially disables Razorpay.
-  // I need to be careful. The user said "on /admission we are not doing online payment".
-  // Only apply this logic if we detect it comes from that flow or is offline.
-
-  // If I cannot distinguish, I might break the online flow.
-  // Let's look at `profileData.paymentMode`. 
-  // If the form sends "Cash" or "Bank Transfer", we do this. 
-  // If it sends "Online", we do Razorpay.
-
+  // Check payment mode FIRST to route correctly
   if (profileData.paymentMode === 'Online' || profileData.paymentMode === 'UPI') {
+    // Online Payment Flow - Create Razorpay Order
     const { order } = await paymentService.createOrder({
       amount: amountToCharge,
       currency: 'INR',
@@ -280,7 +193,12 @@ const initiateEnrollment = async (data) => {
         contact: user.contact
       }
     };
-  } else {
+  }
+
+  // Check if this is an Offline / Manual Admission
+  const isOffline = profileData.paymentMode && ['Cash', 'Bank Transfer', 'Cheque'].includes(profileData.paymentMode);
+
+  if (isOffline || (profileData.paymentMode && profileData.paymentMode !== 'Online' && profileData.paymentMode !== 'UPI')) {
     // Default to Offline/Manual Invoice Generation
     const invoiceNo = `INV-${Date.now()}`;
 
