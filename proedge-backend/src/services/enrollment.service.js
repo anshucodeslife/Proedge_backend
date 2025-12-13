@@ -74,6 +74,8 @@ const initiateEnrollment = async (data) => {
     currentSchool: enrollmentDetails.academic?.school,
     classYear: enrollmentDetails.academic?.class,
     subjects: enrollmentDetails.academic?.subjects,
+    educationLevel: enrollmentDetails.academic?.educationLevel,
+    board: enrollmentDetails.academic?.board,
 
     // Preferences
     batchTiming,
@@ -81,8 +83,9 @@ const initiateEnrollment = async (data) => {
     // Fees & Payment (From EnrollModal)
     totalFees: enrollmentDetails.totalFees || 0,
     originalFees: enrollmentDetails.originalFees || null,
-    paymentMode: enrollmentDetails.paymentMode || 'Online', // CRITICAL: Default to Online if not specified
+    paymentMode: enrollmentDetails.paymentMode || 'UPI', // CRITICAL: Default to UPI if not specified
     paymentOption: enrollmentDetails.paymentOption,
+    courseName: course.title, // Add course name to user profile
 
     // Referral
     referralCode: enrollmentDetails.referralCode || null,
@@ -161,7 +164,27 @@ const initiateEnrollment = async (data) => {
     }
   });
 
-  // 5. Calculate Payment Amount Based on Payment Option
+  // 5. Track Referral Code Usage
+  if (enrollmentDetails.referralCode) {
+    try {
+      // Increment the usedCount for the referral code
+      await prisma.referralCode.updateMany({
+        where: {
+          code: enrollmentDetails.referralCode,
+          isActive: true
+        },
+        data: {
+          usedCount: { increment: 1 }
+        }
+      });
+      console.log(`Referral code ${enrollmentDetails.referralCode} usage incremented`);
+    } catch (error) {
+      console.error('Error tracking referral code:', error);
+      // Don't fail enrollment if referral tracking fails
+    }
+  }
+
+  // 6. Calculate Payment Amount Based on Payment Option
   let amountToCharge = 0;
 
   // Determine amount based on payment option

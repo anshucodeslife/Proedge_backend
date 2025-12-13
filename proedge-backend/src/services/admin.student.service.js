@@ -97,6 +97,13 @@ async function getAllStudents(page = 1, limit = 10, search = '') {
         parentName: true,
         parentContact: true,
 
+        // Academic Info
+        currentSchool: true,
+        classYear: true,
+        subjects: true,
+        educationLevel: true,
+        board: true,
+
         // Course/Fee Info
         courseName: true,
         batchTiming: true,
@@ -162,7 +169,17 @@ async function getAllStudents(page = 1, limit = 10, search = '') {
  * Update student
  */
 async function updateStudent(id, data) {
-  const { fullName, email, studentId, status, contact, dob, gender, address, parentName, parentContact, currentSchool, classYear, educationLevel, board } = data;
+  const {
+    fullName, email, studentId, status, contact, dob, gender, address,
+    parentName, parentContact, currentSchool, classYear, educationLevel, board, subjects,
+    // Course & Payment fields
+    courseName, batchTiming, totalFees, paidFees, originalFees, paymentMode, paymentOption,
+    referralCode, referralAmount, advanceAmount, referenceNo,
+    // Installments
+    installment1Amount, installment1Date, installment1Paid,
+    installment2Amount, installment2Date, installment2Paid,
+    installment3Amount, installment3Date, installment3Paid
+  } = data;
 
   const student = await prisma.user.update({
     where: { id },
@@ -181,6 +198,29 @@ async function updateStudent(id, data) {
       ...(classYear && { classYear }),
       ...(educationLevel && { educationLevel }),
       ...(board && { board }),
+      ...(subjects && { subjects }),
+      // Course & Payment
+      ...(courseName && { courseName }),
+      ...(batchTiming && { batchTiming }),
+      ...(totalFees !== undefined && { totalFees: parseFloat(totalFees) || 0 }),
+      ...(paidFees !== undefined && { paidFees: parseFloat(paidFees) || 0 }),
+      ...(originalFees !== undefined && { originalFees: parseFloat(originalFees) || null }),
+      ...(paymentMode && { paymentMode }),
+      ...(paymentOption && { paymentOption }),
+      ...(referralCode !== undefined && { referralCode }),
+      ...(referralAmount !== undefined && { referralAmount: parseFloat(referralAmount) || 0 }),
+      ...(advanceAmount !== undefined && { advanceAmount: parseFloat(advanceAmount) || null }),
+      ...(referenceNo !== undefined && { referenceNo }),
+      // Installments
+      ...(installment1Amount !== undefined && { installment1Amount: parseFloat(installment1Amount) || null }),
+      ...(installment1Date && { installment1Date }),
+      ...(installment1Paid !== undefined && { installment1Paid }),
+      ...(installment2Amount !== undefined && { installment2Amount: parseFloat(installment2Amount) || null }),
+      ...(installment2Date && { installment2Date }),
+      ...(installment2Paid !== undefined && { installment2Paid }),
+      ...(installment3Amount !== undefined && { installment3Amount: parseFloat(installment3Amount) || null }),
+      ...(installment3Date && { installment3Date }),
+      ...(installment3Paid !== undefined && { installment3Paid }),
     },
     select: {
       id: true,
@@ -425,6 +465,13 @@ async function getAllStudents({ page = 1, limit = 20, search = '', status = '', 
       gender: true,
       parentName: true,
       parentContact: true,
+
+      // Academic Info
+      currentSchool: true,
+      classYear: true,
+      subjects: true,
+      educationLevel: true,
+      board: true,
 
       // Course/Fee Info
       courseName: true,
