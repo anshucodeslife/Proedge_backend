@@ -181,9 +181,12 @@ const verifyPayment = async ({ orderId, paymentId, signature }) => {
 };
 
 const updateStatus = async (paymentId, status) => {
+  // Parse paymentId to integer
+  const id = parseInt(paymentId);
+
   // Update payment status
   const payment = await prisma.payment.update({
-    where: { id: paymentId },
+    where: { id },
     data: { status }
   });
 
