@@ -44,15 +44,22 @@ const verifyPayment = async (req, res, next) => {
   }
 };
 
+const updatePaymentStatus = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const { status } = req.body;
+
+    const result = await paymentService.updateStatus(paymentId, status);
+    success(res, result, 'Payment status updated successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getAllPayments = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-
-    // Assuming paymentService has getAllPayments, if not I need a service method too.
-    // For now, I will use prisma directly via service if available, or just mocking it?
-    // Wait, I should verify paymentService first.
-    // But assuming strict architecture, controller -> service.
 
     const result = await paymentService.getAllPayments(page, limit);
     success(res, result, 'Payments retrieved successfully');
@@ -65,5 +72,6 @@ module.exports = {
   createOrder,
   handleWebhook,
   verifyPayment,
+  updatePaymentStatus,
   getAllPayments,
 };

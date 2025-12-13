@@ -88,6 +88,9 @@ const initiateEnrollment = async (data) => {
     referralCode: enrollmentDetails.referralCode || null,
     referralAmount: enrollmentDetails.referralAmount || 0,
 
+    // Payment in Advance - advance amount field
+    advanceAmount: enrollmentDetails.advanceAmount || null,
+
     // Installments - Sanitize empty strings to null
     installment1Amount: (enrollmentDetails.paymentPlan?.inst1 === "" || enrollmentDetails.paymentPlan?.inst1 === undefined) ? null : enrollmentDetails.paymentPlan?.inst1,
     installment2Amount: (enrollmentDetails.paymentPlan?.inst2 === "" || enrollmentDetails.paymentPlan?.inst2 === undefined) ? null : enrollmentDetails.paymentPlan?.inst2,
@@ -98,7 +101,7 @@ const initiateEnrollment = async (data) => {
   };
 
   // double check for empty strings in decimal fields
-  const decimalFields = ['totalFees', 'originalFees', 'referralAmount', 'installment1Amount', 'installment2Amount', 'installment3Amount'];
+  const decimalFields = ['totalFees', 'originalFees', 'referralAmount', 'advanceAmount', 'installment1Amount', 'installment2Amount', 'installment3Amount'];
   decimalFields.forEach(field => {
     if (profileData[field] === "") profileData[field] = null;
   });
@@ -158,10 +161,25 @@ const initiateEnrollment = async (data) => {
     }
   });
 
-  // 5. Create Payment & Invoice logic
-  // Support for Partial Payment / Installments defined by frontend
-  let amountToCharge = Number(data.amount);
+  // 5. Calculate Payment Amount Based on Payment Option
+  let amountToCharge = 0;
 
+  // Determine amount based on payment option
+  if (profileData.paymentOption === 'Pay in Full') {
+    // Use totalFees (after referral discount)
+    amountToCharge = Number(profileData.totalFees || course.price);
+  } else if (profileData.paymentOption === 'Payment in Advance') {
+    // Use advance amount field
+    amountToCharge = Number(profileData.advanceAmount || 0);
+  } else if (profileData.paymentOption === 'Pay in Installments') {
+    // Use 1st installment amount
+    amountToCharge = Number(profileData.installment1Amount || 0);
+  } else {
+    // Default to total fees
+    amountToCharge = Number(profileData.totalFees || course.price);
+  }
+
+  // Validate amount
   if (!amountToCharge || amountToCharge <= 0) {
     amountToCharge = Number(course.price);
   }
@@ -257,14 +275,47 @@ const getEnrollments = async (userId, page = 1, limit = 10) => {
       user: {
         select: {
           id: true,
+          studentId: true,
           fullName: true,
           email: true,
           contact: true,
+
+          // Personal Details
+          dob: true,
+          gender: true,
           address: true,
+
+          // Parent Details
+          parentName: true,
+          parentContact: true,
+
+          // Academic Details
+          currentSchool: true,
+          classYear: true,
+          educationLevel: true,
+          board: true,
+          subjects: true,
+
+          // Course & Batch
           batchTiming: true,
+          courseName: true,
+
+          // Payment Details
+          totalFees: true,
           originalFees: true,
+          paymentMode: true,
+          paymentOption: true,
+          advanceAmount: true,
+          referralCode: true,
           referralAmount: true,
-          studentId: true // Added for UI display
+
+          // Installment Details
+          installment1Amount: true,
+          installment1Date: true,
+          installment2Amount: true,
+          installment2Date: true,
+          installment3Amount: true,
+          installment3Date: true
         }
       },
       payments: {

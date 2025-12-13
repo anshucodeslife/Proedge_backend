@@ -145,8 +145,21 @@ const verifyPayment = async ({ orderId, paymentId, signature }) => {
     });
   }
 
-  // Create Invoice
-  const invoiceNo = `INV-${Date.now()}`;
+  // Generate sequential invoice number starting from INV1001
+  const lastInvoice = await prisma.invoice.findFirst({
+    orderBy: { id: 'desc' }
+  });
+
+  let invoiceNumber = 1001;
+  if (lastInvoice && lastInvoice.invoiceNo) {
+    // Extract number from last invoice (e.g., "INV1001" -> 1001)
+    const lastNumber = parseInt(lastInvoice.invoiceNo.replace('INV', ''));
+    if (!isNaN(lastNumber)) {
+      invoiceNumber = lastNumber + 1;
+    }
+  }
+
+  const invoiceNo = `INV${invoiceNumber}`;
   const invoice = await prisma.invoice.create({
     data: {
       paymentId: payment.id,
@@ -165,6 +178,36 @@ const verifyPayment = async ({ orderId, paymentId, signature }) => {
     studentEmail: payment.enrollment?.user?.email,
     courseName: payment.enrollment?.course?.title
   };
+};
+
+const updateStatus = async (paymentId, status) => {
+  // Update payment status
+  const payment = await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status }
+  });
+
+  // If marking as SUCCESS, also activate enrollment and user
+  if (status === 'SUCCESS' && payment.enrollmentId) {
+    await prisma.enrollment.update({
+      where: { id: payment.enrollmentId },
+      data: { status: 'ACTIVE' }
+    });
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { id: payment.enrollmentId },
+      include: { user: true }
+    });
+
+    if (enrollment) {
+      await prisma.user.update({
+        where: { id: enrollment.userId },
+        data: { status: 'ACTIVE' }
+      });
+    }
+  }
+
+  return payment;
 };
 
 const getAllPayments = async (page = 1, limit = 10) => {
@@ -206,5 +249,6 @@ module.exports = {
   verifyWebhook,
   handleWebhook,
   verifyPayment,
+  updateStatus,
   getAllPayments,
 };

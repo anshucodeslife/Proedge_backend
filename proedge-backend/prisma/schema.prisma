@@ -48,6 +48,7 @@ model User {
   originalFees  Decimal? @map("original_fees")
   paymentMode   String?  @map("payment_mode")
   paymentOption String?  @map("payment_option")
+  advanceAmount Decimal? @map("advance_amount")
   referenceNo   String?  @map("reference_no")
 
   // Installments
